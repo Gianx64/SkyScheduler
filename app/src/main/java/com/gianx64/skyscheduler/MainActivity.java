@@ -13,6 +13,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 
 public class MainActivity extends AppCompatActivity {
@@ -33,9 +34,9 @@ public class MainActivity extends AppCompatActivity {
         db = new PersonDB(this);
         personnel = db.readAll();
         adapter = new PersonAdapter(this, personnel, db);
-        personnel_list = (ListView) findViewById(R.id.person_list);
+        personnel_list = findViewById(R.id.person_list);
         personnel_list.setAdapter(adapter);
-        Button add_btn = (Button) findViewById(R.id.add_btn);
+        Button add_btn = findViewById(R.id.add_btn);
         add_btn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 final Dialog dialog = new Dialog(MainActivity.this);
@@ -43,16 +44,16 @@ public class MainActivity extends AppCompatActivity {
                 dialog.setCancelable(true);
                 dialog.setContentView(R.layout.person);
                 dialog.show();
-                final EditText name = (EditText) dialog.findViewById(R.id.nombre);
-                final EditText scheduleStart = (EditText) dialog.findViewById(R.id.horarioInicio);
-                final EditText scheduleEnd = (EditText) dialog.findViewById(R.id.horarioFin);
-                Button save = (Button) dialog.findViewById(R.id.save);
-                Button cancel = (Button) dialog.findViewById(R.id.cancel);
+                final EditText name = dialog.findViewById(R.id.nombre);
+                final EditText scheduleStart = dialog.findViewById(R.id.horarioInicio);
+                final EditText scheduleEnd = dialog.findViewById(R.id.horarioFin);
+                Button save = dialog.findViewById(R.id.save);
+                Button cancel = dialog.findViewById(R.id.cancel);
                 save.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         try{
-                            person = new PersonClass(name.getText().toString(), Integer.valueOf(scheduleStart.getText().toString()), Integer.valueOf(scheduleEnd.getText().toString()));
+                            person = new PersonClass(name.getText().toString(), Integer.parseInt(scheduleStart.getText().toString()), Integer.parseInt(scheduleEnd.getText().toString()));
                             db.insert(person);
                         } catch (Exception e) {
                             Toast.makeText(getApplication(), "ERROR", Toast.LENGTH_SHORT).show();
@@ -95,18 +96,22 @@ public class MainActivity extends AppCompatActivity {
                 findViewById(R.id.textView21),
                 findViewById(R.id.textView22)
         };
-        Button generate_btn = (Button) findViewById(R.id.generate_btn);
+        Button generate_btn = findViewById(R.id.generate_btn);
         generate_btn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 for (PersonClass person : personnel) person.setLoad(0);
-                for (int i=0; i<schedule.length; i++) schedule[i] = "-";
+                Arrays.fill(schedule, "-");
                 fillSchedule(schedule);
                 fillTours(schedule, personnel);
 
-                for (int i=0; i<16; i++) textViews[i].setText(schedule[i*2]+" - "+schedule[(i*2)+1]);
+                for (int i=0; i<16; i++) {
+                    if (!schedule[i * 2].equals(schedule[(i * 2) + 1]))
+                        textViews[i].setText(schedule[i * 2] + " - " + schedule[(i * 2) + 1]);
+                    else
+                        textViews[i].setText(schedule[i*2]);
+                }
                 for (int i=16; i<textViews.length; i++) textViews[i].setText(schedule[i+16]);
                 adapter.notifyDataSetChanged();
-                //for (PersonClass person : personnel){ Log.d("info", "ID: "+person.getId()+", Name: "+person.getName()+", Schedule: "+person.getScheduleStart()+" - "+person.getScheduleEnd()+", Load: "+String.valueOf(person.getLoad())); };
             }
         });
     }
@@ -120,31 +125,185 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void fillSchedule(String[] schedule){
-        for (int i=0; i<schedule.length-7; i++) { schedule[i] = getSingle(personnel); }
+        Random random = new Random();
+        int chosen;
+        //TODO: hacer contadores de cuantos entran antes de las 9, de las 10, de las 11
+        for (int i=0; i<4; i++) {   //Llenar elevador principal hasta las 12:00
+            if (personnel.size() == 0)
+                schedule[i] = "Sin personal.";
+            while (true){
+                chosen = random.nextInt(personnel.size());
+                if (i < 2) {
+                    if (i == 1) {
+                        if (!schedule[i - 1].equals(personnel.get(chosen).getName()) && personnel.get(chosen).getScheduleStart() <= 1000) {
+                            personnel.get(chosen).setLoad(personnel.get(chosen).getLoad() + 1);
+                            schedule[i] = personnel.get(chosen).getName();
+                            break;
+                        }
+                    }
+                    else
+                    if (personnel.get(chosen).getScheduleStart() <= 1000) {
+                        personnel.get(chosen).setLoad(personnel.get(chosen).getLoad() + 1);
+                        schedule[i] = personnel.get(chosen).getName();
+                        break;
+                    }
+                }
+                else
+                if (!schedule[i - 1].equals(personnel.get(chosen).getName()) && personnel.get(chosen).getScheduleStart() <= 1100) {
+                    personnel.get(chosen).setLoad(personnel.get(chosen).getLoad() + 1);
+                    schedule[i] = personnel.get(chosen).getName();
+                    break;
+                }
+            }
+        }
+        //Log.d("info", "Elevador principal lleno hasta las 12:00");
+        //TODO: hacer contadores de cuantos salen despues de las 20, de las 21 y de las 22
+        for (int i=18; i<schedule.length-7; i++) {
+            if (personnel.size() == 0)
+                schedule[i] = "Sin personal.";
+            while (true){
+                chosen = random.nextInt(personnel.size());
+                if (i < 24) {   //Llenar elevador principal desde las 20:00
+                    if (i == 18 || i == 19) {
+                        if (personnel.get(chosen).getScheduleEnd() >= 2000)
+                            if (i == 18) {
+                                personnel.get(chosen).setLoad(personnel.get(chosen).getLoad() + 1);
+                                schedule[i] = personnel.get(chosen).getName();
+                                break;
+                            }
+                            else
+                            if (!schedule[i - 1].equals(personnel.get(chosen).getName())) {
+                                personnel.get(chosen).setLoad(personnel.get(chosen).getLoad() + 1);
+                                schedule[i] = personnel.get(chosen).getName();
+                                break;
+                            }
+                    }
+                    else
+                    if (i == 20 || i == 21) {
+                        if (!schedule[i - 1].equals(personnel.get(chosen).getName()) && personnel.get(chosen).getScheduleEnd() >= 2100) {
+                            personnel.get(chosen).setLoad(personnel.get(chosen).getLoad() + 1);
+                            schedule[i] = personnel.get(chosen).getName();
+                            break;
+                        }
+                    }
+                    else
+                    if (!schedule[i - 1].equals(personnel.get(chosen).getName()) && personnel.get(chosen).getScheduleEnd() >= 2200) {
+                        personnel.get(chosen).setLoad(personnel.get(chosen).getLoad() + 1);
+                        schedule[i] = personnel.get(chosen).getName();
+                        break;
+                    }
+                }
+                else    //Llenar elevador de apoyo
+                if (i == 24 || i == 25) {
+                    if (!schedule[i - 1].equals(personnel.get(chosen).getName())) {
+                        personnel.get(chosen).setLoad(personnel.get(chosen).getLoad() + 1);
+                        schedule[i] = personnel.get(chosen).getName();
+                        break;
+                    }
+                }
+                else
+                if (i == 26 || i == 27) {
+                    if (!schedule[i - 1].equals(personnel.get(chosen).getName())) {
+                        personnel.get(chosen).setLoad(personnel.get(chosen).getLoad() + 1);
+                        schedule[i] = personnel.get(chosen).getName();
+                        break;
+                    }
+                }
+                else
+                if (i == 28 || i == 29) {
+                    if (!schedule[18].equals(personnel.get(chosen).getName()) && !schedule[19].equals(personnel.get(chosen).getName()) && !schedule[i - 1].equals(personnel.get(chosen).getName())) {
+                        personnel.get(chosen).setLoad(personnel.get(chosen).getLoad() + 1);
+                        schedule[i] = personnel.get(chosen).getName();
+                        break;
+                    }
+                }
+                else
+                if (i == 30 || i == 31)
+                    if (!schedule[20].equals(personnel.get(chosen).getName()) && !schedule[21].equals(personnel.get(chosen).getName()) && !schedule[i - 1].equals(personnel.get(chosen).getName())) {
+                        personnel.get(chosen).setLoad(personnel.get(chosen).getLoad() + 1);
+                        schedule[i] = personnel.get(chosen).getName();
+                        break;
+                    }
+            }
+        }
+        //Log.d("info", "Elevador secundario lleno y elevador principal llenado desde las 20:00");
+        int retries = 0;
+        for (int i=17; i>3; i--) {  //Llenar elevador principal desde las 12:00 hasta las 20:00
+            if (retries > 22)
+                break;
+            int loadmin = personnel.get(0).getLoad();
+            for (int j = 0; j < personnel.size(); j++)
+                if (personnel.get(j).getLoad() < loadmin)
+                    loadmin = personnel.get(j).getLoad();
+            while (true) {
+                if (retries > 22)
+                    break;
+                chosen = random.nextInt(personnel.size());
+                if (i == 17 || i == 16) {
+                    if (!schedule[27].equals(personnel.get(chosen).getName()) && !schedule[26].equals(personnel.get(chosen).getName()) && !schedule[i + 1].equals(personnel.get(chosen).getName())) {
+                        personnel.get(chosen).setLoad(personnel.get(chosen).getLoad() + 1);
+                        schedule[i] = personnel.get(chosen).getName();
+                        break;
+                    }
+                }
+                else
+                if (i == 15 || i == 14) {
+                    if (!schedule[25].equals(personnel.get(chosen).getName()) && !schedule[24].equals(personnel.get(chosen).getName()) && !schedule[i + 1].equals(personnel.get(chosen).getName())) {
+                        personnel.get(chosen).setLoad(personnel.get(chosen).getLoad() + 1);
+                        schedule[i] = personnel.get(chosen).getName();
+                        break;
+                    }
+                }
+                else
+                //Problema: posible loop infinito parcheado
+                if (personnel.get(chosen).getLoad() <= loadmin) {
+                    retries++;
+                    if (!schedule[i + 1].equals(personnel.get(chosen).getName())) {
+                        personnel.get(chosen).setLoad(personnel.get(chosen).getLoad() + 1);
+                        schedule[i] = personnel.get(chosen).getName();
+                        break;
+                    }
+                    else {
+                        i++;
+                        for (PersonClass person : personnel)
+                            if (person.getName().equals(schedule[i]))
+                                person.setLoad(person.getLoad() - 1);
+                        schedule[i] = "-";
+                    }
+                }
+            }
+        }
+        //En el caso que se cumpla el loop infinito, se deshaga el horario actual y se haga otro nuevo
+        if (retries > 22)
+            fillSchedule(schedule);
+        Log.d("info", "fillSchedule finalizado. Reintentos: "+retries);
     }
 
     public void fillTours(String[] schedule, ArrayList<PersonClass> personnel){
         Random random = new Random();
         int chosen;
-        if (personnel.size() < 8)
+        if (personnel.size() < 8) {
+            if (personnel.size() == 0)
+                for (int i = 32; i < schedule.length; i++)
+                    schedule[i] = "Sin personal.";
             for (PersonClass person : personnel)
-                while (true){
+                while (true) {
                     chosen = random.nextInt(7);
-                    if (schedule[32+chosen] == "-") {
+                    if (schedule[32 + chosen].equals("-")) {
                         if (chosen == 0) {
                             if (person.getScheduleStart() >= 1100) {
                                 schedule[32 + chosen] = person.getName();
                                 person.setLoad(person.getLoad() + 1);
                                 break;
                             }
-                        }
-                        else {
-                            schedule[32+chosen] = person.getName();
-                            person.setLoad(person.getLoad()+1);
+                        } else {
+                            schedule[32 + chosen] = person.getName();
+                            person.setLoad(person.getLoad() + 1);
                             break;
                         }
                     }
                 }
+        }
         else {
             boolean[] picked = new boolean[personnel.size()];
             for (int i = 0; i < personnel.size(); i++) picked[i] = false;
@@ -188,58 +347,5 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
-    }
-
-    public String getSingle(ArrayList<PersonClass> personnel){
-        if (personnel.size() == 0)
-            return "Error.";
-        Random random = new Random();
-        int chosen;
-        int loadmin = personnel.get(0).getLoad();
-        for (int i=0; i<personnel.size(); i++)
-            if (personnel.get(i).getLoad() < loadmin)
-                loadmin = personnel.get(i).getLoad();
-        while (true){
-            chosen = random.nextInt(personnel.size());
-            if (personnel.get(chosen).getLoad() == loadmin){
-                personnel.get(chosen).setLoad(personnel.get(chosen).getLoad() + 1);
-                break;
-            }
-        }
-        return personnel.get(chosen).getName();
-    }
-
-    public String getCouple(ArrayList<PersonClass> personnel){
-        if (personnel.size() == 0)
-            return "Error.";
-        Random random = new Random();
-        int[] chosen = new int[2];
-        int loadmin = personnel.get(0).getLoad();
-        int candidates = 0;
-        for (int i=0; i<personnel.size(); i++)
-            if (personnel.get(i).getLoad() < loadmin)
-                loadmin = personnel.get(i).getLoad();
-        for (int i=0; i<personnel.size(); i++)
-            if (personnel.get(i).getLoad() == loadmin)
-                candidates++;
-        while (true){
-            chosen[0] = random.nextInt(personnel.size());
-            chosen[1] = random.nextInt(personnel.size());
-            if (chosen[0] != chosen[1])
-                if (candidates == 1)
-                    if (personnel.get(chosen[0]).getLoad() < loadmin+1 || personnel.get(chosen[1]).getLoad() < loadmin+1){
-                        personnel.get(chosen[0]).setLoad(personnel.get(chosen[0]).getLoad() + 1);
-                        personnel.get(chosen[1]).setLoad(personnel.get(chosen[1]).getLoad() + 1);
-                        break;
-                    }
-                else
-                    if (personnel.get(chosen[0]).getLoad() < loadmin+1)
-                        if (personnel.get(chosen[1]).getLoad() < loadmin+1){
-                            personnel.get(chosen[0]).setLoad(personnel.get(chosen[0]).getLoad() + 1);
-                            personnel.get(chosen[1]).setLoad(personnel.get(chosen[1]).getLoad() + 1);
-                            break;
-                        }
-        }
-        return personnel.get(chosen[0]).getName() + " - " + personnel.get(chosen[1]).getName();
     }
 }
