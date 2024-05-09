@@ -82,7 +82,7 @@ public class PersonAdapter extends BaseAdapter {
                     @Override
                     public void onClick(View v) {
                         try{
-                            PersonClass editedPerson = new PersonClass(personnel.get(position).getId(), name.getText().toString(), Integer.valueOf(scheduleStart.getText().toString()), Integer.valueOf(scheduleEnd.getText().toString()));
+                            PersonClass editedPerson = new PersonClass(personnel.get(position).getId(), name.getText().toString(), Integer.parseInt(scheduleStart.getText().toString()), Integer.parseInt(scheduleEnd.getText().toString()));
                             db.update(editedPerson);
                         } catch (Exception e) {
                             Toast.makeText(context, "ERROR", Toast.LENGTH_SHORT).show();

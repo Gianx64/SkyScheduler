@@ -5,6 +5,8 @@ import android.app.Dialog;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -17,8 +19,6 @@ import java.util.Arrays;
 import java.util.Random;
 
 public class MainActivity extends AppCompatActivity {
-
-    //Gian code
     PersonDB db;
     PersonAdapter adapter;
     ArrayList<PersonClass> personnel;
@@ -30,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        //Gian code
+
         db = new PersonDB(this);
         personnel = db.readAll();
         adapter = new PersonAdapter(this, personnel, db);
@@ -99,9 +99,8 @@ public class MainActivity extends AppCompatActivity {
         Button generate_btn = findViewById(R.id.generate_btn);
         generate_btn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                for (PersonClass person : personnel) person.setLoad(0);
                 Arrays.fill(schedule, "-");
-                fillSchedule(schedule);
+                fillSchedule(schedule, personnel);
                 fillTours(schedule, personnel);
 
                 for (int i=0; i<16; i++) {
@@ -116,15 +115,37 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void showInfo(){
-        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-        builder.setCancelable(true);
-        builder.setTitle("Información del desarrollador");
-        builder.setMessage("Desarrollado por:\nGiancarlo Anfossy Araneda\n\nContacto: +56 9 8578 2508\ngiancarlo.anfossy@gmail.com");
-        builder.show();
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.toolbar_menu, menu);
+        return true;
     }
 
-    public void fillSchedule(String[] schedule){
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch(item.getItemId()) {
+            case R.id.action_info:
+                AlertDialog.Builder info = new AlertDialog.Builder(MainActivity.this);
+                info.setCancelable(true);
+                info.setTitle("Información del desarrollador");
+                info.setMessage("Desarrollado por:\nGiancarlo Anfossy Araneda\n\nContacto: +56 9 8578 2508\ngiancarlo.anfossy@gmail.com");
+                info.show();
+                break;
+            case R.id.action_use:
+                AlertDialog.Builder use = new AlertDialog.Builder(MainActivity.this);
+                use.setCancelable(true);
+                use.setTitle("Diccionario");
+                use.setMessage("Horario: escrito en formato militar.\n(930 = 0930 = 9:30 AM)\n\nCarga: cantidad de espacios designados en el horario.\n1 elevador = 1 carga, 1 tour = 1 carga.");
+                use.show();
+                break;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+        return true;
+    }
+
+    public void fillSchedule(String[] schedule, ArrayList<PersonClass> personnel){
+        for (PersonClass person : personnel) person.setLoad(0);
         Random random = new Random();
         int chosen;
         //TODO: hacer contadores de cuantos entran antes de las 9, de las 10, de las 11
@@ -275,7 +296,7 @@ public class MainActivity extends AppCompatActivity {
         }
         //En el caso que se cumpla el loop infinito, se deshaga el horario actual y se haga otro nuevo
         if (retries > 22)
-            fillSchedule(schedule);
+            fillSchedule(schedule, personnel);
         Log.d("info", "fillSchedule finalizado. Reintentos: "+retries);
     }
 

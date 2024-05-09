@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">Sky Scheduler</string>
-    <string name="action_settings">Settings</string>
+    <string name="action_info">Desarrollador</string>
+    <string name="action_use">Diccionario</string>
     <string name="generate">Generar Horario</string>
     <string name="name">Nombre:</string>
     <string name="schedule">Horario:</string>
