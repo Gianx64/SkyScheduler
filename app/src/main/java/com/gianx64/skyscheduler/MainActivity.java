@@ -69,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
                                     errors.append("\nFin de horario mayor que 2359.");
                                 if (Integer.parseInt(scheduleStart.getText().toString()) > Integer.parseInt(scheduleEnd.getText().toString()))
                                     errors.append("\nInicio de horario mayor que fin de horario.");
-                                Toast.makeText(getApplication(), errors, Toast.LENGTH_SHORT).show();
+                                Toast.makeText(getApplicationContext(), errors, Toast.LENGTH_SHORT).show();
                             }
                         } catch (Exception e) {
                             StringBuilder errors = new StringBuilder();
@@ -82,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
                                 errors.append("\nFin de horario no ingresado.");
                             if (errors.length() == 7)
                                 errors.append(e.getMessage());
-                            Toast.makeText(getApplication(), errors, Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getApplicationContext(), errors, Toast.LENGTH_SHORT).show();
                         }
                         personnel = db.readAll();
                         adapter.notifyDataSetChanged();
