@@ -101,7 +101,9 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 Arrays.fill(schedule, "-");
                 fillSchedule(schedule, personnel);
-                for (PersonClass person : personnel) person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
+                if (personnel.size() > 0)
+                    for (PersonClass person : personnel)
+                        person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
                 fillTours(schedule, personnel);
 
                 for (int i=0; i<16; i++) {
@@ -136,7 +138,7 @@ public class MainActivity extends AppCompatActivity {
                 AlertDialog.Builder use = new AlertDialog.Builder(MainActivity.this);
                 use.setCancelable(true);
                 use.setTitle("Diccionario");
-                use.setMessage("Horario: escrito en formato militar.\n(930 = 0930 = 9:30 AM)\n\nCarga: cantidad de espacios designados en el horario.\n1 elevador acompañado = 1 carga, 1 elevador solo = 2 cargas, 1 tour = 1 carga.");
+                use.setMessage("Horario: escrito en formato militar.\n(930 = 0930 = 9:30 AM)\n\nCarga: cantidad de espacios asignados en el horario.\n1 elevador acompañado = 1 carga, 1 elevador solo = 2 cargas, 1 tour = 1 carga.");
                 use.show();
                 break;
             default:
@@ -146,25 +148,27 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void fillSchedule(String[] schedule, ArrayList<PersonClass> personnel){
-        for (PersonClass person : personnel) person.setLoad(0);
         Random random = new Random();
         int chosen;
         int[] present = new int[5];
-        for (PersonClass person : personnel) {
-            if (person.getScheduleStart() <= 1000)
-                present[0]++;   //Anfitriones que entran antes de las 10:00
-            if (person.getScheduleStart() <= 1100)
-                present[1]++;   //Anfitriones que entran antes de las 11:00
-            if (person.getScheduleEnd() >= 2200)
-                present[4]++;   //Anfitriones que a las 22:00
-            if (person.getScheduleEnd() >= 2100)
-                present[3]++;   //Anfitriones que salen a las 21:00
-            if (person.getScheduleEnd() >= 2000)
-                present[2]++;   //Anfitriones que salen a las 20:00
-        }
+        if (personnel.size() > 0)
+            for (PersonClass person : personnel) {
+                person.setLoad(0);
+                if (person.getScheduleStart() <= 1000)
+                    present[0]++;   //Anfitriones que entran antes de las 10:00
+                if (person.getScheduleStart() <= 1100)
+                    present[1]++;   //Anfitriones que entran antes de las 11:00
+                if (person.getScheduleEnd() >= 2200)
+                    present[4]++;   //Anfitriones que a las 22:00
+                if (person.getScheduleEnd() >= 2100)
+                    present[3]++;   //Anfitriones que salen a las 21:00
+                if (person.getScheduleEnd() >= 2000)
+                    present[2]++;   //Anfitriones que salen a las 20:00
+            }
         for (int i=0; i<4; i++) {   //Llenar elevador principal hasta las 12:00
             if (personnel.size() == 0)
                 schedule[i] = "Sin personal.";
+            else
             while (true){
                 chosen = random.nextInt(personnel.size());
                 if (i < 2) {
@@ -220,6 +224,7 @@ public class MainActivity extends AppCompatActivity {
         for (int i=18; i<24; i++) { //Llenar elevador principal desde las 20:00
             if (personnel.size() == 0)
                 schedule[i] = "Sin personal.";
+            else
             while (true){
                 chosen = random.nextInt(personnel.size());
                 if (i == 18 || i == 19) {

@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 34
+    compileSdkVersion 33
     buildToolsVersion "33.0.3"
 
     defaultConfig {
         applicationId "com.gianx64.skyscheduler"
         minSdkVersion 15
-        targetSdkVersion 34
+        targetSdkVersion 33
         versionCode 1
         versionName "1.0"
 
@@ -19,7 +19,16 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
-    }
+    }/*
+
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'armeabi-v7a', 'arm64-v8a', 'x86_64', 'x86'
+            universalApk true
+        }
+    }*/
 }
 
 dependencies {
