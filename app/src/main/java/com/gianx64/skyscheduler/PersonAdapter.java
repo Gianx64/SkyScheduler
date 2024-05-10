@@ -102,7 +102,7 @@ public class PersonAdapter extends BaseAdapter {
                             }
                         } catch (Exception e) {
                             StringBuilder errors = new StringBuilder();
-                            errors.append("Error:");
+                            errors.append("Error: ");
                             if (name.getText().toString().equals(""))
                                 errors.append("\nNombre no ingresado.");
                             if (scheduleStart.getText().toString().equals("")) {
@@ -111,6 +111,8 @@ public class PersonAdapter extends BaseAdapter {
                             if (scheduleEnd.getText().toString().equals("")) {
                                 errors.append("\nFin de horario no ingresado.");
                             }
+                            if (errors.length() == 7)
+                                errors.append(e.getMessage());
                             Toast.makeText(context, errors, Toast.LENGTH_SHORT).show();
                         }
                         personnel = db.readAll();
