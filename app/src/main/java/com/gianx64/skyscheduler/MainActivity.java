@@ -54,9 +54,33 @@ public class MainActivity extends AppCompatActivity {
                     public void onClick(View v) {
                         try {
                             person = new PersonClass(name.getText().toString(), Integer.parseInt(scheduleStart.getText().toString()), Integer.parseInt(scheduleEnd.getText().toString()));
-                            db.insert(person);
+                            if (!name.getText().toString().equals("") && Integer.parseInt(scheduleStart.getText().toString()) < 2360 && Integer.parseInt(scheduleEnd.getText().toString()) < 2360 && Integer.parseInt(scheduleStart.getText().toString()) < Integer.parseInt(scheduleEnd.getText().toString())) {
+                                db.insert(person);
+                                Toast.makeText(getApplicationContext(), "Personal añadido exitosamente.", Toast.LENGTH_SHORT).show();
+                            }
+                            else {
+                                StringBuilder errors = new StringBuilder();
+                                errors.append("Error:");
+                                if (name.getText().toString().equals(""))
+                                    errors.append("\nNombre no ingresado.");
+                                if (!(Integer.parseInt(scheduleStart.getText().toString()) < 2360))
+                                    errors.append("\nInicio de horario mayor que 2359.");
+                                if (!(Integer.parseInt(scheduleEnd.getText().toString()) < 2360))
+                                    errors.append("\nFin de horario mayor que 2359.");
+                                if (Integer.parseInt(scheduleStart.getText().toString()) > Integer.parseInt(scheduleEnd.getText().toString()))
+                                    errors.append("\nInicio de horario mayor que fin de horario.");
+                                Toast.makeText(getApplication(), errors, Toast.LENGTH_SHORT).show();
+                            }
                         } catch (Exception e) {
-                            Toast.makeText(getApplication(), "ERROR", Toast.LENGTH_SHORT).show();
+                            StringBuilder errors = new StringBuilder();
+                            errors.append("Error:");
+                            if (name.getText().toString().equals(""))
+                                errors.append("\nNombre no ingresado.");
+                            if (scheduleStart.getText().toString().equals(""))
+                                errors.append("\nInicio de horario no ingresado.");
+                            if (scheduleEnd.getText().toString().equals(""))
+                                errors.append("\nFin de horario no ingresado.");
+                            Toast.makeText(getApplication(), errors, Toast.LENGTH_SHORT).show();
                         }
                         personnel = db.readAll();
                         adapter.notifyDataSetChanged();
@@ -131,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
                 AlertDialog.Builder info = new AlertDialog.Builder(MainActivity.this);
                 info.setCancelable(true);
                 info.setTitle("Información del desarrollador");
-                info.setMessage("Desarrollado por:\nGiancarlo Anfossy Araneda\n\nContacto: +56 9 8578 2508\ngiancarlo.anfossy@gmail.com");
+                info.setMessage("Desarrollado por:\nGiancarlo Anfossy Araneda\n\nContacto: +56 9 8578 2508\ngiancarlo.anfossy@gmail.com\n\nCréditos de ícono:\nRocío Palomino Araneda");
                 info.show();
                 break;
             case R.id.action_use:
