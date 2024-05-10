@@ -4,7 +4,6 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -490,20 +489,20 @@ public class MainActivity extends AppCompatActivity {
         else {
             boolean[] picked = new boolean[personnel.size()];
             for (int i = 0; i < personnel.size(); i++) picked[i] = false;
-            int loadmin = personnel.get(0).getLoad();
+            int loadmax = personnel.get(0).getLoad();
             for (int i=0; i<personnel.size(); i++)
-                if (personnel.get(i).getLoad() < loadmin)
-                    loadmin = personnel.get(i).getLoad();
+                if (personnel.get(i).getLoad() > loadmax)
+                    loadmax = personnel.get(i).getLoad();
             int ammount = 0;
             for (int i=0; i<personnel.size(); i++)
-                if (personnel.get(i).getLoad() == loadmin)
+                if (personnel.get(i).getLoad() < loadmax)
                     ammount++;
             for (int i = 0; i < 7; i++) {
                 tries = 0;
                 while (true){
                     chosen = random.nextInt(personnel.size());
                     if (ammount > 0) {
-                        if (personnel.get(chosen).getLoad() == loadmin && !picked[chosen]) {
+                        if (personnel.get(chosen).getLoad() < loadmax && !picked[chosen]) {
                             switch (i) {
                                 case 0:
                                     if (personnel.get(chosen).getScheduleStart() <= 1100 && !personnel.get(chosen).getName().equals(schedule[2]) && !personnel.get(chosen).getName().equals(schedule[3])) {
