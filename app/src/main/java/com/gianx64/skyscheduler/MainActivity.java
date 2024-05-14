@@ -214,7 +214,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void genL26(String[] schedule, ArrayList<PersonClass> personnel){
-        //TODO: verificar horario de almuerzo
         Random random = new Random();   //Generador de numero aleatorio
         int chosen;                     //Persona elegida
         int[] present = new int[12];    //Cantidad de personal presente en cada hora
@@ -229,8 +228,13 @@ public class MainActivity extends AppCompatActivity {
             for (int i=0; i<present.length; i++) {
                 present[i] = 0;
                 for (PersonClass person : personnel)
-                    if (person.getScheduleStart() <= (10 + i) * 100 && person.getScheduleEnd() >= (11 + i) * 100)
-                        present[i]++;
+                    if (person.getScheduleStart()%100 > 0) {
+                        if (person.getScheduleStart()/100 != i+6)
+                            if (person.getScheduleStart() <= (10 + i) * 100 && person.getScheduleEnd() >= (11 + i) * 100)
+                                present[i]++;
+                    } else if (person.getScheduleStart()/100 != i+7)
+                        if (person.getScheduleStart() <= (10 + i) * 100 && person.getScheduleEnd() >= (11 + i) * 100)
+                            present[i]++;
             }
             for (int i = 0; i < 4; i++) {   //Llenar elevador principal desde las 10:00 hasta las 12:00
                 if (present[i/2] > 0) {
@@ -271,8 +275,7 @@ public class MainActivity extends AppCompatActivity {
                                 }
                             }
                     }
-                }
-                else schedule[i] = "Sin personal.";
+                } else schedule[i] = "Sin personal.";
             }
             //Log.d("info", "Elevador principal lleno hasta las 12:00");
             for (int i = 23; i > 17; i--) { //Llenar elevador principal desde las 20:00 hasta las 22:00
@@ -290,8 +293,7 @@ public class MainActivity extends AppCompatActivity {
                                 break;
                             }
                     }
-                }
-                else schedule[i] = "Sin personal.";
+                } else schedule[i] = "Sin personal.";
             }
             //Log.d("info", "Elevador principal llenado desde las 20:00");
             for (int i = 17; i > 3; i--) {  //Llenar elevador principal desde las 20:00 hasta las 12:00
@@ -328,41 +330,95 @@ public class MainActivity extends AppCompatActivity {
                                     schedule[i] = personnel.get(chosen).getName();
                                     personnel.get(chosen).addLoad();
                                     break;
+                                } else if (!personnel.get(chosen).getName().equals(schedule[i-(i%2)]) && !personnel.get(chosen).getName().equals(schedule[(i-(i%2))+1])) {
+                                    if (!personnel.get(chosen).getName().equals(schedule[(i-(i%2))+10]) && !personnel.get(chosen).getName().equals(schedule[(i-(i%2))+11])) {
+                                        if (!personnel.get(chosen).getName().equals(schedule[31 + (i / 2)])) {
+                                            if (personnel.get(chosen).getLoad() < loadmax) {
+                                                schedule[i] = personnel.get(chosen).getName();
+                                                personnel.get(chosen).addLoad();
+                                                break;
+                                            } else if (present[i / 2] == 2) {
+                                                schedule[i] = personnel.get(chosen).getName();
+                                                personnel.get(chosen).addLoad();
+                                                break;
+                                            }
+                                        } else {
+                                            schedule[i] = personnel.get(chosen).getName();
+                                            schedule[31+(i/2)] = "-";
+                                            break;
+                                        }
+                                    } else if (personnel.get(chosen).getName().equals(schedule[31+(i/2)])) {    //Caso que debería ser imposible
+                                        if (personnel.get(chosen).getName().equals(schedule[(i-(i%2))+10]))
+                                            schedule[(i-(i%2))+10] = "-";
+                                        else if (personnel.get(chosen).getName().equals(schedule[(i-(i%2))+11]))
+                                            schedule[(i-(i%2))+11] = "-";
+                                        personnel.get(chosen).setLoad(personnel.get(chosen).getLoad()-1);
+                                        schedule[i] = personnel.get(chosen).getName();
+                                        schedule[31+(i/2)] = "-";
+                                        break;
+                                    } else if (personnel.get(chosen).getName().equals(schedule[(i-(i%2))+10])) {
+                                        schedule[i] = personnel.get(chosen).getName();
+                                        schedule[(i-(i%2))+10] = "-";
+                                        break;
+                                    } else if (personnel.get(chosen).getName().equals(schedule[(i-(i%2))+11])) {
+                                        schedule[i] = personnel.get(chosen).getName();
+                                        schedule[(i-(i%2))+11] = "-";
+                                        break;
+                                    }
+                                }
+                            } else if (i < 12 && i > 5) {   //Topa con tour y horas de almuerzo
+                                if (present[i / 2] == 1) {
+                                    if (personnel.get(chosen).getScheduleStart()%100 > 0) {
+                                        if (personnel.get(chosen).getScheduleStart()/100 != (i/2)+6) {
+                                            schedule[i] = personnel.get(chosen).getName();
+                                            personnel.get(chosen).addLoad();
+                                            break;
+                                        }
+                                    } else if (personnel.get(chosen).getScheduleStart()/100 != (i/2)+7) {
+                                        schedule[i] = personnel.get(chosen).getName();
+                                        personnel.get(chosen).addLoad();
+                                        break;
+                                    }
                                 } else if (!personnel.get(chosen).getName().equals(schedule[i-(i%2)]) && !personnel.get(chosen).getName().equals(schedule[(i-(i%2))+1])
-                                        && !personnel.get(chosen).getName().equals(schedule[(i-(i%2))+10]) && !personnel.get(chosen).getName().equals(schedule[(i-(i%2))+11])
                                         && !personnel.get(chosen).getName().equals(schedule[31+(i/2)])) {
                                     if (personnel.get(chosen).getLoad() < loadmax) {
-                                        schedule[i] = personnel.get(chosen).getName();
-                                        personnel.get(chosen).addLoad();
-                                        break;
+                                        if (personnel.get(chosen).getScheduleStart()%100 > 0) {
+                                            if (personnel.get(chosen).getScheduleStart()/100 != (i/2)+6) {
+                                                schedule[i] = personnel.get(chosen).getName();
+                                                personnel.get(chosen).addLoad();
+                                                break;
+                                            }
+                                        } else if (personnel.get(chosen).getScheduleStart()/100 != (i/2)+7) {
+                                            schedule[i] = personnel.get(chosen).getName();
+                                            personnel.get(chosen).addLoad();
+                                            break;
+                                        }
                                     }
                                     else if (present[i / 2] == 2) {
+                                        if (personnel.get(chosen).getScheduleStart()%100 > 0) {
+                                            if (personnel.get(chosen).getScheduleStart()/100 != (i/2)+6) {
+                                                schedule[i] = personnel.get(chosen).getName();
+                                                personnel.get(chosen).addLoad();
+                                                break;
+                                            }
+                                        } else if (personnel.get(chosen).getScheduleStart()/100 != (i/2)+7) {
+                                            schedule[i] = personnel.get(chosen).getName();
+                                            personnel.get(chosen).addLoad();
+                                            break;
+                                        }
+                                    }
+                                } else if (personnel.get(chosen).getName().equals(schedule[31+(i/2)])) {
+                                    if (personnel.get(chosen).getScheduleStart()%100 > 0) {
+                                        if (personnel.get(chosen).getScheduleStart()/100 != (i/2)+6) {
+                                            schedule[i] = personnel.get(chosen).getName();
+                                            schedule[31+(i/2)] = "-";
+                                            break;
+                                        }
+                                    } else if (personnel.get(chosen).getScheduleStart()/100 != (i/2)+7) {
                                         schedule[i] = personnel.get(chosen).getName();
-                                        personnel.get(chosen).addLoad();
+                                        schedule[31+(i/2)] = "-";
                                         break;
                                     }
-                                } else if ((personnel.get(chosen).getName().equals(schedule[(i-(i%2))+10]) || personnel.get(chosen).getName().equals(schedule[(i-(i%2))+11]))
-                                        && personnel.get(chosen).getName().equals(schedule[31+(i/2)])) {    //Caso que debería ser imposible
-                                    if (personnel.get(chosen).getName().equals(schedule[(i-(i%2))+10]))
-                                        schedule[(i-(i%2))+10] = "-";
-                                    else if (personnel.get(chosen).getName().equals(schedule[(i-(i%2))+11]))
-                                        schedule[(i-(i%2))+11] = "-";
-                                    personnel.get(chosen).setLoad(personnel.get(chosen).getLoad()-1);
-                                    schedule[i] = personnel.get(chosen).getName();
-                                    schedule[31+(i/2)] = "-";
-                                    break;
-                                } else if (personnel.get(chosen).getName().equals(schedule[(i-(i%2))+10])) {
-                                    schedule[i] = personnel.get(chosen).getName();
-                                    schedule[(i-(i%2))+10] = "-";
-                                    break;
-                                } else if (personnel.get(chosen).getName().equals(schedule[(i-(i%2))+11])) {
-                                    schedule[i] = personnel.get(chosen).getName();
-                                    schedule[(i-(i%2))+11] = "-";
-                                    break;
-                                } else if (personnel.get(chosen).getName().equals(schedule[31+(i/2)])) {
-                                    schedule[i] = personnel.get(chosen).getName();
-                                    schedule[31+(i/2)] = "-";
-                                    break;
                                 }
                             } else {    //Topa con tour
                                 if (present[i / 2] == 1) {
@@ -388,8 +444,7 @@ public class MainActivity extends AppCompatActivity {
                                 }
                             }
                     }
-                }
-                else schedule[i] = "Sin personal.";
+                } else schedule[i] = "Sin personal.";
             }
             //Log.d("info", "Elevador principal lleno desde las 12:00 hasta las 20:00");
         }
@@ -436,8 +491,7 @@ public class MainActivity extends AppCompatActivity {
                                 break;
                             }
                     }
-                }
-                else schedule[i] = "Sin personal.";
+                } else schedule[i] = "Sin personal.";
             }
             //Log.d("info", "Elevador de apoyo lleno desde 17:00 hasta 21:00");
         }
