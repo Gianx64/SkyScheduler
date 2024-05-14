@@ -3,6 +3,9 @@
     <string name="action_info">Desarrollador</string>
     <string name="action_use">Diccionario</string>
     <string name="generate">Generar Horario</string>
+    <string name="gen_l26">Generar L26</string>
+    <string name="gen_l25">Generar L25</string>
+    <string name="gen_tours">Generar Tours</string>
     <string name="name">Nombre:</string>
     <string name="schedule">Horario:</string>
     <string name="scheduleStart">Inicio horario (Ej: 0930):</string>

@@ -92,6 +92,8 @@ public class PersonAdapter extends BaseAdapter {
                                 errors.append("Error:");
                                 if (name.getText().toString().equals(""))
                                     errors.append("\nNombre no ingresado.");
+                                if (name.getText().toString().equals("-"))
+                                    errors.append("\nEse nombre causa problemas.");
                                 if (!(Integer.parseInt(scheduleStart.getText().toString()) < 2360))
                                     errors.append("\nInicio de horario mayor que 2359.");
                                 if (!(Integer.parseInt(scheduleEnd.getText().toString()) < 2360))
@@ -105,14 +107,14 @@ public class PersonAdapter extends BaseAdapter {
                             errors.append("Error: ");
                             if (name.getText().toString().equals(""))
                                 errors.append("\nNombre no ingresado.");
-                            if (scheduleStart.getText().toString().equals("")) {
+                            if (name.getText().toString().equals("-"))
+                                errors.append("\nEse nombre causa problemas.");
+                            if (scheduleStart.getText().toString().equals(""))
                                 errors.append("\nInicio de horario no ingresado.");
-                            }
-                            if (scheduleEnd.getText().toString().equals("")) {
+                            if (scheduleEnd.getText().toString().equals(""))
                                 errors.append("\nFin de horario no ingresado.");
-                            }
                             if (errors.length() == 7)
-                                errors.append(e.getMessage());
+                                errors.append("\n"+e.getMessage());
                             Toast.makeText(context, errors, Toast.LENGTH_SHORT).show();
                         }
                         personnel = db.readAll();

@@ -66,4 +66,8 @@ public class PersonClass {
     public void setLoad(int load) {
         this.load = load;
     }
+
+    public void addLoad() {
+        this.load++;
+    }
 }

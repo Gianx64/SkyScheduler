@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
-    android:layout_width="380dp"
+    android:layout_width="300dp"
     android:layout_height="match_parent"
     android:gravity="center" >
     <TextView
@@ -11,7 +11,8 @@
     <EditText
         android:id="@+id/nombre"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:hint="@string/name" />
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -20,7 +21,8 @@
         android:id="@+id/horarioInicio"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="time" />
+        android:inputType="time"
+        android:hint="@string/scheduleStart" />
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -29,7 +31,8 @@
         android:id="@+id/horarioFin"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="time" />
+        android:inputType="time"
+        android:hint="@string/scheduleEnd" />
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content" >
