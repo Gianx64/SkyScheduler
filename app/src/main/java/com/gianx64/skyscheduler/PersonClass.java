@@ -70,4 +70,8 @@ public class PersonClass {
     public void addLoad() {
         this.load++;
     }
+
+    public void subLoad() {
+        this.load--;
+    }
 }
