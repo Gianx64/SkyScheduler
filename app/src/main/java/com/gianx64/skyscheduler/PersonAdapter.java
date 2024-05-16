@@ -1,8 +1,8 @@
 package com.gianx64.skyscheduler;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
@@ -19,10 +19,10 @@ import java.util.ArrayList;
 public class PersonAdapter extends BaseAdapter {
     ArrayList<PersonClass> personnel;
     LayoutInflater inflater;
-    Context context;
+    Activity context;
     PersonDB db;
 
-    public PersonAdapter(@NonNull Context context, ArrayList<PersonClass> personnel, PersonDB db) {
+    public PersonAdapter(@NonNull Activity context, ArrayList<PersonClass> personnel, PersonDB db) {
         this.context = context;
         this.inflater = LayoutInflater.from(context);
         this.personnel = personnel;
@@ -143,6 +143,7 @@ public class PersonAdapter extends BaseAdapter {
                         db.remove(personnel.get(position).getId());
                         personnel = db.readAll();
                         notifyDataSetChanged();
+                        context.recreate();
                     }
                 });
                 delete.setNegativeButton("No", new DialogInterface.OnClickListener() {

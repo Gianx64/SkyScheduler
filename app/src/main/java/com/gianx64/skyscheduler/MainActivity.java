@@ -32,7 +32,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //TODO: Resetear cuando se elimine una persona
         Arrays.fill(schedule, "-");
         db = new PersonDB(this);
         personnel = db.readAll();
@@ -213,22 +212,6 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    public void balanceL26(String[] schedule) {
-        Random random = new Random();   //Generador de numero aleatorio
-        int chosen;                     //Persona elegida
-        int loadmin = personnel.get(0).getLoad();
-        int loadmax = loadmin;
-        do {
-            for (int i = 0; i < personnel.size(); i++)
-                if (personnel.get(i).getLoad() < loadmin)
-                    loadmin = personnel.get(i).getLoad();
-            for (int i = 0; i < personnel.size(); i++)
-                if (personnel.get(i).getLoad() > loadmax)
-                    loadmax = personnel.get(i).getLoad();
-            //TODO: balancear horario intercambiando nombres
-        } while (loadmin+1<loadmax-1);
-    }
-
     public void genL26(String[] schedule, ArrayList<PersonClass> personnel){
         Random random = new Random();   //Generador de numero aleatorio
         int chosen;                     //Persona elegida
@@ -261,15 +244,25 @@ public class MainActivity extends AppCompatActivity {
                             if (i > 1) {    //Topa con tour
                                 if (present[i / 2] == 1) {
                                     schedule[i] = personnel.get(chosen).getName();
-                                    if (!personnel.get(chosen).getName().equals(schedule[(i / 2) + 32]))
+                                    if (!personnel.get(chosen).getName().equals(schedule[(i / 2) + 31]))
                                         personnel.get(chosen).addLoad();
-                                    else schedule[(i / 2) + 32] = "-";
+                                    else {
+                                        for (int j = 32; j < schedule.length; j++)
+                                            schedule[j] = "-";
+                                        for (PersonClass person : personnel)
+                                            person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
+                                    }
                                     break;
                                 } else if (!schedule[i - (i % 2)].equals(personnel.get(chosen).getName()) && !schedule[(i - (i % 2)) + 1].equals(personnel.get(chosen).getName())) {
                                     schedule[i] = personnel.get(chosen).getName();
-                                    if (!personnel.get(chosen).getName().equals(schedule[(i / 2) + 32]))
+                                    if (!personnel.get(chosen).getName().equals(schedule[(i / 2) + 31]))
                                         personnel.get(chosen).addLoad();
-                                    else schedule[(i / 2) + 32] = "-";
+                                    else {
+                                        for (int j = 32; j < schedule.length; j++)
+                                            schedule[j] = "-";
+                                        for (PersonClass person : personnel)
+                                            person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
+                                    }
                                     break;
                                 }
                             } else if (i == 0) {
@@ -290,7 +283,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 } else schedule[i] = "Sin personal.";
             }
-            //Log.d("info", "Elevador principal lleno hasta las 12:00");
+            //Log.d("info", "Elevador principal lleno desde las 10:00 hasta las 12:00");
             for (int i = 23; i > 17; i--) { //Llenar elevador principal desde las 22:00 hasta las 20:00
                 if (present[i/2] > 0) {
                     while (true) {
@@ -335,13 +328,13 @@ public class MainActivity extends AppCompatActivity {
                     }
                 } else schedule[i] = "Sin personal.";
             }
-            //Log.d("info", "Elevador principal llenado desde las 20:00");
+            //Log.d("info", "Elevador principal lleno desde las 22:00 hasta las 20:00");
             for (int i = 17; i > 3; i--) {  //Llenar elevador principal desde las 20:00 hasta las 12:00
                 //TODO: if (personnel.size() > 4) que no tengan elevadores seguidos
                 if (present[i/2] > 0) {
                     while (true) {
                         chosen = random.nextInt(personnel.size());
-                        Log.d("info", "i = "+i+", chosen: "+personnel.get(chosen).getName()+" "+personnel.get(chosen).getLoad());
+                        //Log.d("info", "i = "+i+", chosen: "+personnel.get(chosen).getName()+" "+personnel.get(chosen).getLoad());
                         if (personnel.get(chosen).getScheduleStart() <= (10 + (i / 2)) * 100 && personnel.get(chosen).getScheduleEnd() >= (11 + (i / 2)) * 100)
                             if (i == 17 || i == 16) {   //Topa con elevador secundario
                                 if (present[i / 2] == 1) {
@@ -371,19 +364,27 @@ public class MainActivity extends AppCompatActivity {
                                     if (!personnel.get(chosen).getName().equals(schedule[(i-(i%2))+10]) && !personnel.get(chosen).getName().equals(schedule[(i-(i%2))+11])) {
                                         if (!personnel.get(chosen).getName().equals(schedule[31 + (i / 2)])) {
                                             schedule[i] = personnel.get(chosen).getName();
-                                            if (personnel.get(chosen).getName().equals(schedule[31 + (i / 2)]))
-                                                schedule[31 + (i / 2)] = "-";
+                                            if (personnel.get(chosen).getName().equals(schedule[31 + (i / 2)])) {
+                                                for (int j = 32; j < schedule.length; j++)
+                                                    schedule[j] = "-";
+                                                for (PersonClass person : personnel)
+                                                    person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
+                                            }
                                             else personnel.get(chosen).addLoad();
                                             break;
                                         } else {
                                             schedule[i] = personnel.get(chosen).getName();
-                                            schedule[31+(i/2)] = "-";
+                                            for (int j = 32; j < schedule.length; j++)
+                                                schedule[j] = "-";
+                                            for (PersonClass person : personnel)
+                                                person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
                                             break;
                                         }
                                     } else {
                                         schedule[i] = personnel.get(chosen).getName();
                                         if (personnel.get(chosen).getName().equals(schedule[31+(i/2)])) //Caso que debería ser imposible
-                                            schedule[31+(i/2)] = "-";
+                                            for (int j = 32; j < schedule.length; j++)
+                                                schedule[j] = "-";
                                         for (int j = 24; j < 32; j++)
                                             schedule[j] = "-";
                                         for (PersonClass person : personnel)
@@ -421,26 +422,40 @@ public class MainActivity extends AppCompatActivity {
                                     if (personnel.get(chosen).getScheduleStart()%100 > 0) {
                                         if (personnel.get(chosen).getScheduleStart()/100 != (i/2)+6) {
                                             schedule[i] = personnel.get(chosen).getName();
-                                            schedule[31+(i/2)] = "-";
+                                            for (int j = 32; j < schedule.length; j++)
+                                                schedule[j] = "-";
+                                            for (PersonClass person : personnel)
+                                                person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
                                             break;
                                         }
                                     } else if (personnel.get(chosen).getScheduleStart()/100 != (i/2)+7) {
                                         schedule[i] = personnel.get(chosen).getName();
-                                        schedule[31+(i/2)] = "-";
+                                        for (int j = 32; j < schedule.length; j++)
+                                            schedule[j] = "-";
+                                        for (PersonClass person : personnel)
+                                            person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
                                         break;
                                     }
                                 }
                             } else {    //Topa con tour
                                 if (present[i / 2] == 1) {
                                     schedule[i] = personnel.get(chosen).getName();
-                                    if (personnel.get(chosen).getName().equals(schedule[31+(i/2)]))
-                                        schedule[31+(i/2)] = "-";
+                                    if (personnel.get(chosen).getName().equals(schedule[31+(i/2)])) {
+                                        for (int j = 32; j < schedule.length; j++)
+                                            schedule[j] = "-";
+                                        for (PersonClass person : personnel)
+                                            person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
+                                    }
                                     else personnel.get(chosen).addLoad();
                                     break;
                                 } else if (!personnel.get(chosen).getName().equals(schedule[i-(i%2)]) && !personnel.get(chosen).getName().equals(schedule[(i-(i%2))+1])) {
                                     schedule[i] = personnel.get(chosen).getName();
-                                    if (personnel.get(chosen).getName().equals(schedule[31 + (i / 2)]))
-                                        schedule[31 + (i / 2)] = "-";
+                                    if (personnel.get(chosen).getName().equals(schedule[31 + (i / 2)])) {
+                                        for (int j = 32; j < schedule.length; j++)
+                                            schedule[j] = "-";
+                                        for (PersonClass person : personnel)
+                                            person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
+                                    }
                                     else personnel.get(chosen).addLoad();
                                     break;
                                 }
@@ -448,7 +463,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 } else schedule[i] = "Sin personal.";
             }
-            //Log.d("info", "Elevador principal lleno desde las 12:00 hasta las 20:00");
+            //Log.d("info", "Elevador principal lleno desde las 20:00 hasta las 12:00");
         }
     }
 
@@ -473,7 +488,6 @@ public class MainActivity extends AppCompatActivity {
                         present[i]++;
             }
             for (int i = 31; i > 23; i--) {  //Llenar elevador de apoyo desde 21:00 hasta 17:00
-                //TODO: Implementar loadmax (?)
                 if (personnel.size() < 3)
                     schedule[i] = "Sin personal.";
                 else if (present[7+((i-24)/2)] > 2) {
@@ -484,29 +498,36 @@ public class MainActivity extends AppCompatActivity {
                             if (present[7+((i-24)/2)] == 3) {
                                 if (!schedule[i-(i%2)-10].equals(personnel.get(chosen).getName()) && !schedule[(i-(i%2))-9].equals(personnel.get(chosen).getName())) {
                                     schedule[i] = personnel.get(chosen).getName();
-                                    if ((i == 24 || i == 25) && personnel.get(chosen).getName().equals(schedule[38]))
-                                        schedule[38] = "-";
+                                    if ((i == 24 || i == 25) && personnel.get(chosen).getName().equals(schedule[38])) {
+                                        for (int j = 32; j < schedule.length; j++)
+                                            schedule[j] = "-";
+                                        for (PersonClass person : personnel)
+                                            person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
+                                    }
                                     else personnel.get(chosen).addLoad();
                                     break;
                                 }
                             } else if (!schedule[i-(i%2)].equals(personnel.get(chosen).getName()) && !schedule[(i-(i%2))+1].equals(personnel.get(chosen).getName())
                             && !schedule[i-(i%2)-10].equals(personnel.get(chosen).getName()) && !schedule[(i-(i%2))-9].equals(personnel.get(chosen).getName())) {
                                 schedule[i] = personnel.get(chosen).getName();
-                                if ((i == 24 || i == 25) && personnel.get(chosen).getName().equals(schedule[38]))
-                                    schedule[38] = "-";
+                                if ((i == 24 || i == 25) && personnel.get(chosen).getName().equals(schedule[38])) {
+                                    for (int j = 32; j < schedule.length; j++)
+                                        schedule[j] = "-";
+                                    for (PersonClass person : personnel)
+                                        person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
+                                }
                                 else personnel.get(chosen).addLoad();
                                 break;
                             }
                     }
                 } else schedule[i] = "Sin personal.";
             }
-            //Log.d("info", "Elevador de apoyo lleno desde 17:00 hasta 21:00");
+            //Log.d("info", "Elevador de apoyo lleno desde 21:00 hasta 17:00");
         }
     }
 
-    public void fillTours(String[] schedule, ArrayList<PersonClass> personnel){
-        //TODO: actualizar verificacion de horarios y verificacion de almuerzo
-        //TODO: arreglar problemas cuando son 3
+    public void fillTours(String[] schedule, ArrayList<PersonClass> personnel) {
+        //TODO: implementar sistema de present (si son 3 y no topa con elevador secundario) (si son 3 y topa con elevador secundario?)
         Random random = new Random();
         int chosen, tries;
         for (int i = 32; i < schedule.length; i++)
@@ -519,63 +540,46 @@ public class MainActivity extends AppCompatActivity {
                     schedule[i] = "Sin personal.";
             else for (PersonClass person : personnel) {
                 tries = 0;
-                while (true) {
+                do {
                     chosen = random.nextInt(7);
-                    if (schedule[32 + chosen].equals("-")) {
-                        switch (chosen) {
-                            case 0:
-                                if (person.getScheduleStart() <= 1100 && !person.getName().equals(schedule[2]) && !person.getName().equals(schedule[3])) {
-                                    schedule[32] = person.getName();
+                    switch (chosen) {
+                        case 0:
+                        case 1:
+                        case 5:
+                            if (person.getScheduleStart() <= (11 + chosen) * 100 && person.getScheduleEnd() >= (12 + chosen) * 100)
+                                if (!person.getName().equals(schedule[(chosen*2)+2]) && !person.getName().equals(schedule[(chosen*2)+3])) {
+                                    schedule[32+chosen] = person.getName();
                                     person.addLoad();
                                 }
-                                tries++;
-                                break;
-                            case 1:
-                                if (!person.getName().equals(schedule[4]) && !person.getName().equals(schedule[5])) {
-                                    schedule[32 + chosen] = person.getName();
+                            tries++;
+                            break;
+                        case 2: //Hora de almuerzo
+                        case 3:
+                        case 4:
+                            if (person.getScheduleStart() <= (11 + chosen) * 100 && person.getScheduleEnd() >= (12 + chosen) * 100)
+                                if (!person.getName().equals(schedule[(chosen*2)+2]) && !person.getName().equals(schedule[(chosen*2)+3])) {
+                                    if (person.getScheduleStart()%100 > 0) {
+                                        if (person.getScheduleStart()/100 != chosen+7) {
+                                            schedule[32+chosen] = person.getName();
+                                            person.addLoad();
+                                        }
+                                    } else if (person.getScheduleStart()/100 != chosen+8) {
+                                        schedule[32+chosen] = person.getName();
+                                        person.addLoad();
+                                    }
+                                }
+                            tries++;
+                            break;
+                        case 6: //Topa con elevador primario y secundario
+                            if (person.getScheduleStart() <= (11 + chosen) * 100 && person.getScheduleEnd() >= (12 + chosen) * 100)
+                                if (!person.getName().equals(schedule[(chosen*2)+2]) && !person.getName().equals(schedule[(chosen*2)+3]) && !person.getName().equals(schedule[(chosen*2)+12]) && !person.getName().equals(schedule[(chosen*2)+13])) {
+                                    schedule[32+chosen] = person.getName();
                                     person.addLoad();
                                 }
-                                tries++;
-                                break;
-                            case 2:
-                                if (!person.getName().equals(schedule[6]) && !person.getName().equals(schedule[7])) {
-                                    schedule[32 + chosen] = person.getName();
-                                    person.addLoad();
-                                }
-                                tries++;
-                                break;
-                            case 3:
-                                if (!person.getName().equals(schedule[8]) && !person.getName().equals(schedule[9])) {
-                                    schedule[32 + chosen] = person.getName();
-                                    person.addLoad();
-                                }
-                                tries++;
-                                break;
-                            case 4:
-                                if (!person.getName().equals(schedule[10]) && !person.getName().equals(schedule[11])) {
-                                    schedule[32 + chosen] = person.getName();
-                                    person.addLoad();
-                                }
-                                tries++;
-                                break;
-                            case 5:
-                                if (!person.getName().equals(schedule[12]) && !person.getName().equals(schedule[13])) {
-                                    schedule[32 + chosen] = person.getName();
-                                    person.addLoad();
-                                }
-                                tries++;
-                                break;
-                            case 6:
-                                if (!person.getName().equals(schedule[14]) && !person.getName().equals(schedule[15]) && !person.getName().equals(schedule[24]) && !person.getName().equals(schedule[25])) {
-                                    schedule[32 + chosen] = person.getName();
-                                    person.addLoad();
-                                }
-                                tries++;
-                                break;
-                        }
-                        if (!schedule[32 + chosen].equals("-") || tries > 6) break;
+                            tries++;
+                            break;
                     }
-                }
+                } while (schedule[32 + chosen].equals("-") && tries < 7);
             }
         }
         else {
@@ -591,147 +595,96 @@ public class MainActivity extends AppCompatActivity {
                     ammount++;
             for (int i = 0; i < 7; i++) {
                 tries = 0;
-                while (true){
+                do {
                     chosen = random.nextInt(personnel.size());
-                    if (ammount > 0) {
-                        if (personnel.get(chosen).getLoad() < loadmax && !picked[chosen]) {
-                            switch (i) {
-                                case 0:
-                                    if (personnel.get(chosen).getScheduleStart() <= 1100 && !personnel.get(chosen).getName().equals(schedule[2]) && !personnel.get(chosen).getName().equals(schedule[3])) {
-                                        schedule[32 + i] = personnel.get(chosen).getName();
-                                        personnel.get(chosen).addLoad();
-                                        picked[chosen] = true;
-                                        ammount--;
+                    switch (i) {
+                        case 0:
+                        case 1:
+                        case 5:
+                            if (personnel.get(chosen).getScheduleStart() <= (11 + i) * 100 && personnel.get(chosen).getScheduleEnd() >= (12 + i) * 100)
+                                if (!personnel.get(chosen).getName().equals(schedule[(i * 2) + 2]) && !personnel.get(chosen).getName().equals(schedule[(i * 2) + 3]))
+                                    if (!picked[chosen])
+                                        if (ammount > 0) {
+                                            if (personnel.get(chosen).getLoad() < loadmax) {
+                                                schedule[32 + i] = personnel.get(chosen).getName();
+                                                personnel.get(chosen).addLoad();
+                                                picked[chosen] = true;
+                                                ammount--;
+                                            }
+                                        } else {
+                                            schedule[32 + i] = personnel.get(chosen).getName();
+                                            personnel.get(chosen).addLoad();
+                                            picked[chosen] = true;
+                                        }
+                            tries++;
+                            break;
+                        case 2: //Hora de almuerzo
+                        case 3:
+                        case 4:
+                            if (personnel.get(chosen).getScheduleStart() <= (11 + i) * 100 && personnel.get(chosen).getScheduleEnd() >= (12 + i) * 100)
+                                if (!personnel.get(chosen).getName().equals(schedule[(i * 2) + 2]) && !personnel.get(chosen).getName().equals(schedule[(i * 2) + 3])) {
+                                    if (personnel.get(chosen).getScheduleStart() % 100 > 0) {
+                                        if (personnel.get(chosen).getScheduleStart() / 100 != i + 7) {
+                                            if (!picked[chosen])
+                                                if (ammount > 0) {
+                                                    if (personnel.get(chosen).getLoad() < loadmax) {
+                                                        schedule[32 + i] = personnel.get(chosen).getName();
+                                                        personnel.get(chosen).addLoad();
+                                                        picked[chosen] = true;
+                                                        ammount--;
+                                                    }
+                                                } else {
+                                                    schedule[32 + i] = personnel.get(chosen).getName();
+                                                    personnel.get(chosen).addLoad();
+                                                    picked[chosen] = true;
+                                                }
+                                        }
+                                    } else if (personnel.get(chosen).getScheduleStart() / 100 != i + 8) {
+                                        if (!picked[chosen])
+                                            if (ammount > 0) {
+                                                if (personnel.get(chosen).getLoad() < loadmax) {
+                                                    schedule[32 + i] = personnel.get(chosen).getName();
+                                                    personnel.get(chosen).addLoad();
+                                                    picked[chosen] = true;
+                                                    ammount--;
+                                                }
+                                            } else {
+                                                schedule[32 + i] = personnel.get(chosen).getName();
+                                                personnel.get(chosen).addLoad();
+                                                picked[chosen] = true;
+                                            }
                                     }
-                                    tries++;
-                                    break;
-                                case 1:
-                                    if (!personnel.get(chosen).getName().equals(schedule[4]) && !personnel.get(chosen).getName().equals(schedule[5])) {
-                                        schedule[32 + i] = personnel.get(chosen).getName();
-                                        personnel.get(chosen).addLoad();
-                                        picked[chosen] = true;
-                                        ammount--;
-                                    }
-                                    tries++;
-                                    break;
-                                case 2:
-                                    if (!personnel.get(chosen).getName().equals(schedule[6]) && !personnel.get(chosen).getName().equals(schedule[7])) {
-                                        schedule[32 + i] = personnel.get(chosen).getName();
-                                        personnel.get(chosen).addLoad();
-                                        picked[chosen] = true;
-                                        ammount--;
-                                    }
-                                    tries++;
-                                    break;
-                                case 3:
-                                    if (!personnel.get(chosen).getName().equals(schedule[8]) && !personnel.get(chosen).getName().equals(schedule[9])) {
-                                        schedule[32 + i] = personnel.get(chosen).getName();
-                                        personnel.get(chosen).addLoad();
-                                        picked[chosen] = true;
-                                        ammount--;
-                                    }
-                                    tries++;
-                                    break;
-                                case 4:
-                                    if (!personnel.get(chosen).getName().equals(schedule[10]) && !personnel.get(chosen).getName().equals(schedule[11])) {
-                                        schedule[32 + i] = personnel.get(chosen).getName();
-                                        personnel.get(chosen).addLoad();
-                                        picked[chosen] = true;
-                                        ammount--;
-                                    }
-                                    tries++;
-                                    break;
-                                case 5:
-                                    if (!personnel.get(chosen).getName().equals(schedule[12]) && !personnel.get(chosen).getName().equals(schedule[13])) {
-                                        schedule[32 + i] = personnel.get(chosen).getName();
-                                        personnel.get(chosen).addLoad();
-                                        picked[chosen] = true;
-                                        ammount--;
-                                    }
-                                    tries++;
-                                    break;
-                                case 6:
-                                    if (!personnel.get(chosen).getName().equals(schedule[14]) && !personnel.get(chosen).getName().equals(schedule[15]) && !personnel.get(chosen).getName().equals(schedule[24]) && !personnel.get(chosen).getName().equals(schedule[25])) {
-                                        schedule[32 + i] = personnel.get(chosen).getName();
-                                        personnel.get(chosen).addLoad();
-                                        picked[chosen] = true;
-                                        ammount--;
-                                    }
-                                    tries++;
-                                    break;
-                            }
-                            if (!schedule[32 + i].equals("-") || tries > 6) break;
-                        }
+                                }
+                            tries++;
+                            break;
+                        case 6: //Topa con elevador primario y secundario
+                            if (personnel.get(chosen).getScheduleStart() <= (11 + i) * 100 && personnel.get(chosen).getScheduleEnd() >= (12 + i) * 100)
+                                if (!personnel.get(chosen).getName().equals(schedule[(i * 2) + 2]) && !personnel.get(chosen).getName().equals(schedule[(i * 2) + 3]) && !personnel.get(chosen).getName().equals(schedule[(i * 2) + 12]) && !personnel.get(chosen).getName().equals(schedule[(i * 2) + 13])) {
+                                    if (!picked[chosen])
+                                        if (ammount > 0) {
+                                            if (personnel.get(chosen).getLoad() < loadmax) {
+                                                schedule[32 + i] = personnel.get(chosen).getName();
+                                                personnel.get(chosen).addLoad();
+                                                picked[chosen] = true;
+                                                ammount--;
+                                            }
+                                        } else {
+                                            schedule[32 + i] = personnel.get(chosen).getName();
+                                            personnel.get(chosen).addLoad();
+                                            picked[chosen] = true;
+                                        }
+                                }
+                            tries++;
+                            break;
                     }
-                    else
-                    if (!picked[chosen]) {
-                        switch (i) {
-                            case 0:
-                                if (personnel.get(chosen).getScheduleStart() <= 1100 && !personnel.get(chosen).getName().equals(schedule[2]) && !personnel.get(chosen).getName().equals(schedule[3])) {
-                                    schedule[32 + i] = personnel.get(chosen).getName();
-                                    personnel.get(chosen).addLoad();
-                                    picked[chosen] = true;
-                                }
-                                tries++;
-                                break;
-                            case 1:
-                                if (!personnel.get(chosen).getName().equals(schedule[4]) && !personnel.get(chosen).getName().equals(schedule[5])) {
-                                    schedule[32 + i] = personnel.get(chosen).getName();
-                                    personnel.get(chosen).addLoad();
-                                    picked[chosen] = true;
-                                }
-                                tries++;
-                                break;
-                            case 2:
-                                if (!personnel.get(chosen).getName().equals(schedule[6]) && !personnel.get(chosen).getName().equals(schedule[7])) {
-                                    schedule[32 + i] = personnel.get(chosen).getName();
-                                    personnel.get(chosen).addLoad();
-                                    picked[chosen] = true;
-                                }
-                                tries++;
-                                break;
-                            case 3:
-                                if (!personnel.get(chosen).getName().equals(schedule[8]) && !personnel.get(chosen).getName().equals(schedule[9])) {
-                                    schedule[32 + i] = personnel.get(chosen).getName();
-                                    personnel.get(chosen).addLoad();
-                                    picked[chosen] = true;
-                                }
-                                tries++;
-                                break;
-                            case 4:
-                                if (!personnel.get(chosen).getName().equals(schedule[10]) && !personnel.get(chosen).getName().equals(schedule[11])) {
-                                    schedule[32 + i] = personnel.get(chosen).getName();
-                                    personnel.get(chosen).addLoad();
-                                    picked[chosen] = true;
-                                }
-                                tries++;
-                                break;
-                            case 5:
-                                if (!personnel.get(chosen).getName().equals(schedule[12]) && !personnel.get(chosen).getName().equals(schedule[13])) {
-                                    schedule[32 + i] = personnel.get(chosen).getName();
-                                    personnel.get(chosen).addLoad();
-                                    picked[chosen] = true;
-                                }
-                                tries++;
-                                break;
-                            case 6:
-                                if (!personnel.get(chosen).getName().equals(schedule[14]) && !personnel.get(chosen).getName().equals(schedule[15]) && !personnel.get(chosen).getName().equals(schedule[24]) && !personnel.get(chosen).getName().equals(schedule[25])) {
-                                    schedule[32 + i] = personnel.get(chosen).getName();
-                                    personnel.get(chosen).addLoad();
-                                    picked[chosen] = true;
-                                }
-                                tries++;
-                                break;
-                        }
-                        if (!schedule[32 + i].equals("-") || tries > 6) break;
-                    }
-                }
+                } while (schedule[32 + i].equals("-") && tries < 7);
             }
-            for (int i = 32; i < schedule.length; i++)
-                if (schedule[i] == "-") {
+            /*for (int i = 32; i < schedule.length; i++)
+                if (schedule[i].equals("-")) {
                     fillTours(schedule, personnel);
                     break;
-                }
+                }*/
         }
+        //Log.d("info", "Tours lleno desde 11:00 hasta 17:00");
     }
 }
