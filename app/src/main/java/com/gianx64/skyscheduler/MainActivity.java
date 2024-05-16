@@ -24,20 +24,44 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<PersonClass> personnel;
     PersonAdapter adapter;
     ListView personnel_list;
-    String[] schedule = new String[39];
-    PersonClass person;
+    static TextView[] textViews;
+    static String[] schedule = new String[39];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Arrays.fill(schedule, "-");
         db = new PersonDB(this);
         personnel = db.readAll();
         adapter = new PersonAdapter(this, personnel, db);
         personnel_list = findViewById(R.id.person_list);
         personnel_list.setAdapter(adapter);
+        textViews = new TextView[]{
+                findViewById(R.id.textView0),
+                findViewById(R.id.textView1),
+                findViewById(R.id.textView2),
+                findViewById(R.id.textView3),
+                findViewById(R.id.textView4),
+                findViewById(R.id.textView5),
+                findViewById(R.id.textView6),
+                findViewById(R.id.textView7),
+                findViewById(R.id.textView8),
+                findViewById(R.id.textView9),
+                findViewById(R.id.textView10),
+                findViewById(R.id.textView11),
+                findViewById(R.id.textView12),
+                findViewById(R.id.textView13),
+                findViewById(R.id.textView14),
+                findViewById(R.id.textView15),
+                findViewById(R.id.textView16),
+                findViewById(R.id.textView17),
+                findViewById(R.id.textView18),
+                findViewById(R.id.textView19),
+                findViewById(R.id.textView20),
+                findViewById(R.id.textView21),
+                findViewById(R.id.textView22)
+        };
         Button add_btn = findViewById(R.id.add_btn);
         add_btn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -55,10 +79,11 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View v) {
                         try {
-                            person = new PersonClass(name.getText().toString(), Integer.parseInt(scheduleStart.getText().toString()), Integer.parseInt(scheduleEnd.getText().toString()));
+                            PersonClass person = new PersonClass(name.getText().toString(), Integer.parseInt(scheduleStart.getText().toString()), Integer.parseInt(scheduleEnd.getText().toString()));
                             if (!name.getText().toString().equals("") && !name.getText().toString().equals("-") && Integer.parseInt(scheduleStart.getText().toString()) < 2360 && Integer.parseInt(scheduleEnd.getText().toString()) < 2360 && Integer.parseInt(scheduleStart.getText().toString()) < Integer.parseInt(scheduleEnd.getText().toString())) {
                                 db.insert(person);
                                 Toast.makeText(getApplicationContext(), "Personal añadido exitosamente.", Toast.LENGTH_SHORT).show();
+                                wipeSchedule();
                             }
                             else {
                                 StringBuilder errors = new StringBuilder();
@@ -103,31 +128,6 @@ public class MainActivity extends AppCompatActivity {
                 });
             }
         });
-        final TextView[] textViews = {
-                findViewById(R.id.textView0),
-                findViewById(R.id.textView1),
-                findViewById(R.id.textView2),
-                findViewById(R.id.textView3),
-                findViewById(R.id.textView4),
-                findViewById(R.id.textView5),
-                findViewById(R.id.textView6),
-                findViewById(R.id.textView7),
-                findViewById(R.id.textView8),
-                findViewById(R.id.textView9),
-                findViewById(R.id.textView10),
-                findViewById(R.id.textView11),
-                findViewById(R.id.textView12),
-                findViewById(R.id.textView13),
-                findViewById(R.id.textView14),
-                findViewById(R.id.textView15),
-                findViewById(R.id.textView16),
-                findViewById(R.id.textView17),
-                findViewById(R.id.textView18),
-                findViewById(R.id.textView19),
-                findViewById(R.id.textView20),
-                findViewById(R.id.textView21),
-                findViewById(R.id.textView22)
-        };
         Button generate_btn = findViewById(R.id.generate_btn);
         generate_btn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -181,6 +181,7 @@ public class MainActivity extends AppCompatActivity {
                 adapter.notifyDataSetChanged();
             }
         });
+        wipeSchedule();
     }
 
     @Override
@@ -210,6 +211,17 @@ public class MainActivity extends AppCompatActivity {
                 return super.onOptionsItemSelected(item);
         }
         return true;
+    }
+
+    public static void wipeSchedule() {
+        Arrays.fill(schedule, "-");
+        for (int i=0; i<16; i++) {
+            if (!schedule[i * 2].equals(schedule[(i * 2) + 1]))
+                textViews[i].setText(schedule[i * 2] + " - " + schedule[(i * 2) + 1]);
+            else
+                textViews[i].setText(schedule[i*2]);
+        }
+        for (int i=16; i<textViews.length; i++) textViews[i].setText(schedule[i+16]);
     }
 
     public void genL26(String[] schedule, ArrayList<PersonClass> personnel){
@@ -330,17 +342,31 @@ public class MainActivity extends AppCompatActivity {
             }
             //Log.d("info", "Elevador principal lleno desde las 22:00 hasta las 20:00");
             for (int i = 17; i > 3; i--) {  //Llenar elevador principal desde las 20:00 hasta las 12:00
-                //TODO: if (personnel.size() > 4) que no tengan elevadores seguidos
                 if (present[i/2] > 0) {
                     while (true) {
                         chosen = random.nextInt(personnel.size());
                         //Log.d("info", "i = "+i+", chosen: "+personnel.get(chosen).getName()+" "+personnel.get(chosen).getLoad());
                         if (personnel.get(chosen).getScheduleStart() <= (10 + (i / 2)) * 100 && personnel.get(chosen).getScheduleEnd() >= (11 + (i / 2)) * 100)
                             if (i == 17 || i == 16) {   //Topa con elevador secundario
-                                if (present[i / 2] == 1) {
+                                if (present[8] == 1) {
                                     schedule[i] = personnel.get(chosen).getName();
                                     personnel.get(chosen).addLoad();
                                     break;
+                                } else if (present[8] > 3) {
+                                    if (!personnel.get(chosen).getName().equals(schedule[16]) && !personnel.get(chosen).getName().equals(schedule[17]) && !personnel.get(chosen).getName().equals(schedule[18]) && !personnel.get(chosen).getName().equals(schedule[19])) {
+                                        if (!personnel.get(chosen).getName().equals(schedule[26]) && !personnel.get(chosen).getName().equals(schedule[27])) {
+                                            schedule[i] = personnel.get(chosen).getName();
+                                            personnel.get(chosen).addLoad();
+                                            break;
+                                        } else {
+                                            schedule[i] = personnel.get(chosen).getName();
+                                            for (int j = 24; j < 32; j++)
+                                                schedule[j] = "-";
+                                            for (PersonClass person : personnel)
+                                                person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
+                                            break;
+                                        }
+                                    }
                                 } else if (!personnel.get(chosen).getName().equals(schedule[16]) && !personnel.get(chosen).getName().equals(schedule[17])) {
                                     if (!personnel.get(chosen).getName().equals(schedule[26]) && !personnel.get(chosen).getName().equals(schedule[27])) {
                                         schedule[i] = personnel.get(chosen).getName();
@@ -356,15 +382,48 @@ public class MainActivity extends AppCompatActivity {
                                     }
                                 }
                             } else if (i == 15 || i == 14) {    //Topa con elevador secundario y tour
-                                if (present[i / 2] == 1) {
+                                if (present[7] == 1) {
                                     schedule[i] = personnel.get(chosen).getName();
                                     personnel.get(chosen).addLoad();
                                     break;
-                                } else if (!personnel.get(chosen).getName().equals(schedule[i-(i%2)]) && !personnel.get(chosen).getName().equals(schedule[(i-(i%2))+1])) {
-                                    if (!personnel.get(chosen).getName().equals(schedule[(i-(i%2))+10]) && !personnel.get(chosen).getName().equals(schedule[(i-(i%2))+11])) {
-                                        if (!personnel.get(chosen).getName().equals(schedule[31 + (i / 2)])) {
+                                } else if (present[7] > 3) {
+                                    if (!personnel.get(chosen).getName().equals(schedule[14]) && !personnel.get(chosen).getName().equals(schedule[15]) && !personnel.get(chosen).getName().equals(schedule[16]) && !personnel.get(chosen).getName().equals(schedule[17])) {
+                                        if (!personnel.get(chosen).getName().equals(schedule[24]) && !personnel.get(chosen).getName().equals(schedule[25])) {
+                                            if (!personnel.get(chosen).getName().equals(schedule[38])) {
+                                                schedule[i] = personnel.get(chosen).getName();
+                                                if (personnel.get(chosen).getName().equals(schedule[38])) {
+                                                    for (int j = 32; j < schedule.length; j++)
+                                                        schedule[j] = "-";
+                                                    for (PersonClass person : personnel)
+                                                        person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
+                                                }
+                                                else personnel.get(chosen).addLoad();
+                                                break;
+                                            } else {
+                                                schedule[i] = personnel.get(chosen).getName();
+                                                for (int j = 32; j < schedule.length; j++)
+                                                    schedule[j] = "-";
+                                                for (PersonClass person : personnel)
+                                                    person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
+                                                break;
+                                            }
+                                        } else {
                                             schedule[i] = personnel.get(chosen).getName();
-                                            if (personnel.get(chosen).getName().equals(schedule[31 + (i / 2)])) {
+                                            if (personnel.get(chosen).getName().equals(schedule[38])) //Caso que debería ser imposible
+                                                for (int j = 32; j < schedule.length; j++)
+                                                    schedule[j] = "-";
+                                            for (int j = 24; j < 32; j++)
+                                                schedule[j] = "-";
+                                            for (PersonClass person : personnel)
+                                                person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
+                                            break;
+                                        }
+                                    }
+                                } else if (!personnel.get(chosen).getName().equals(schedule[14]) && !personnel.get(chosen).getName().equals(schedule[15])) {
+                                    if (!personnel.get(chosen).getName().equals(schedule[24]) && !personnel.get(chosen).getName().equals(schedule[25])) {
+                                        if (!personnel.get(chosen).getName().equals(schedule[38])) {
+                                            schedule[i] = personnel.get(chosen).getName();
+                                            if (personnel.get(chosen).getName().equals(schedule[38])) {
                                                 for (int j = 32; j < schedule.length; j++)
                                                     schedule[j] = "-";
                                                 for (PersonClass person : personnel)
@@ -382,7 +441,7 @@ public class MainActivity extends AppCompatActivity {
                                         }
                                     } else {
                                         schedule[i] = personnel.get(chosen).getName();
-                                        if (personnel.get(chosen).getName().equals(schedule[31+(i/2)])) //Caso que debería ser imposible
+                                        if (personnel.get(chosen).getName().equals(schedule[38])) //Caso que debería ser imposible
                                             for (int j = 32; j < schedule.length; j++)
                                                 schedule[j] = "-";
                                         for (int j = 24; j < 32; j++)
@@ -405,7 +464,40 @@ public class MainActivity extends AppCompatActivity {
                                         personnel.get(chosen).addLoad();
                                         break;
                                     }
-                                } else if (!personnel.get(chosen).getName().equals(schedule[i-(i%2)]) && !personnel.get(chosen).getName().equals(schedule[(i-(i%2))+1])
+                                } else if (present[i / 2] > 3) {
+                                    if (!personnel.get(chosen).getName().equals(schedule[i-(i%2)]) && !personnel.get(chosen).getName().equals(schedule[i-(i%2)+1]) && !personnel.get(chosen).getName().equals(schedule[i-(i%2)+2]) && !personnel.get(chosen).getName().equals(schedule[i-(i%2)+3])
+                                            && !personnel.get(chosen).getName().equals(schedule[31+(i/2)])) {
+                                        if (personnel.get(chosen).getScheduleStart() % 100 > 0) {
+                                            if (personnel.get(chosen).getScheduleStart() / 100 != (i / 2) + 6) {
+                                                schedule[i] = personnel.get(chosen).getName();
+                                                personnel.get(chosen).addLoad();
+                                                break;
+                                            }
+                                        } else if (personnel.get(chosen).getScheduleStart() / 100 != (i / 2) + 7) {
+                                            schedule[i] = personnel.get(chosen).getName();
+                                            personnel.get(chosen).addLoad();
+                                            break;
+                                        }
+                                    } else if (personnel.get(chosen).getName().equals(schedule[31+(i/2)])) {
+                                        if (personnel.get(chosen).getScheduleStart()%100 > 0) {
+                                            if (personnel.get(chosen).getScheduleStart()/100 != (i/2)+6) {
+                                                schedule[i] = personnel.get(chosen).getName();
+                                                for (int j = 32; j < schedule.length; j++)
+                                                    schedule[j] = "-";
+                                                for (PersonClass person : personnel)
+                                                    person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
+                                                break;
+                                            }
+                                        } else if (personnel.get(chosen).getScheduleStart()/100 != (i/2)+7) {
+                                            schedule[i] = personnel.get(chosen).getName();
+                                            for (int j = 32; j < schedule.length; j++)
+                                                schedule[j] = "-";
+                                            for (PersonClass person : personnel)
+                                                person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
+                                            break;
+                                        }
+                                    }
+                                } else if (!personnel.get(chosen).getName().equals(schedule[i-(i%2)]) && !personnel.get(chosen).getName().equals(schedule[i-(i%2)+1])
                                         && !personnel.get(chosen).getName().equals(schedule[31+(i/2)])) {
                                     if (personnel.get(chosen).getScheduleStart() % 100 > 0) {
                                         if (personnel.get(chosen).getScheduleStart() / 100 != (i / 2) + 6) {
@@ -448,7 +540,19 @@ public class MainActivity extends AppCompatActivity {
                                     }
                                     else personnel.get(chosen).addLoad();
                                     break;
-                                } else if (!personnel.get(chosen).getName().equals(schedule[i-(i%2)]) && !personnel.get(chosen).getName().equals(schedule[(i-(i%2))+1])) {
+                                } else if (present[i / 2] > 3) {
+                                    if (!personnel.get(chosen).getName().equals(schedule[i-(i%2)]) && !personnel.get(chosen).getName().equals(schedule[i-(i%2)+1]) && !personnel.get(chosen).getName().equals(schedule[i-(i%2)+2]) && !personnel.get(chosen).getName().equals(schedule[i-(i%2)+3])) {
+                                        schedule[i] = personnel.get(chosen).getName();
+                                        if (personnel.get(chosen).getName().equals(schedule[31 + (i / 2)])) {
+                                            for (int j = 32; j < schedule.length; j++)
+                                                schedule[j] = "-";
+                                            for (PersonClass person : personnel)
+                                                person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
+                                        }
+                                        else personnel.get(chosen).addLoad();
+                                        break;
+                                    }
+                                } else if (!personnel.get(chosen).getName().equals(schedule[i-(i%2)]) && !personnel.get(chosen).getName().equals(schedule[i-(i%2)+1])) {
                                     schedule[i] = personnel.get(chosen).getName();
                                     if (personnel.get(chosen).getName().equals(schedule[31 + (i / 2)])) {
                                         for (int j = 32; j < schedule.length; j++)

@@ -86,6 +86,7 @@ public class PersonAdapter extends BaseAdapter {
                             if (!name.getText().toString().equals("") && Integer.parseInt(scheduleStart.getText().toString()) < 2360 && Integer.parseInt(scheduleEnd.getText().toString()) < 2360 && Integer.parseInt(scheduleStart.getText().toString()) < Integer.parseInt(scheduleEnd.getText().toString())) {
                                 db.update(editedPerson);
                                 Toast.makeText(context, "Cambios guardados exitosamente.", Toast.LENGTH_SHORT).show();
+                                MainActivity.wipeSchedule();
                             }
                             else {
                                 StringBuilder errors = new StringBuilder();
@@ -143,7 +144,7 @@ public class PersonAdapter extends BaseAdapter {
                         db.remove(personnel.get(position).getId());
                         personnel = db.readAll();
                         notifyDataSetChanged();
-                        context.recreate();
+                        MainActivity.wipeSchedule();
                     }
                 });
                 delete.setNegativeButton("No", new DialogInterface.OnClickListener() {
