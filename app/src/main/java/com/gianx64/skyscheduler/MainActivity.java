@@ -586,10 +586,17 @@ public class MainActivity extends AppCompatActivity {
                 for (PersonClass person : personnel)
                     if (person.getScheduleStart() <= (11 + i) * 100 && person.getScheduleEnd() >= (12 + i) * 100)   //Si la persona está disponible en esa hora
                         if (!person.getName().equals(schedule[(i*2)+2]) && !person.getName().equals(schedule[(i*2)+3])) //Si no topa con elevador principal
-                            if (i == 6) {
-                                if (!person.getName().equals(schedule[24]) && !person.getName().equals(schedule[25]))   //Si no topa con elevador secundario
-                                    present.get(i).add(person);
-                            } else present.get(i).add(person);
+                            if (person.getScheduleStart()%100 > 0) {    //Si la persona entra a una hora inexacta (Ej: 9:30)
+                                if (person.getScheduleStart()/100 != i+7)   //Si no es hora de almuerzo de esa persona
+                                    if (i == 6) {
+                                        if (!person.getName().equals(schedule[24]) && !person.getName().equals(schedule[25]))   //Si no topa con elevador secundario
+                                            present.get(i).add(person);
+                                    } else present.get(i).add(person);
+                            } else if (person.getScheduleStart()/100 != i+8)    //Si no es hora de almuerzo de esa persona
+                                if (i == 6) {
+                                    if (!person.getName().equals(schedule[24]) && !person.getName().equals(schedule[25]))   //Si no topa con elevador secundario
+                                        present.get(i).add(person);
+                                } else present.get(i).add(person);
             }
             /*for (int i=0; i<present.size(); i++) {
                 Log.d("info", "Personas para las "+(i+11));
