@@ -10,6 +10,7 @@
     <string name="schedule">Horario:</string>
     <string name="scheduleStart">Inicio horario (Ej: 0930):</string>
     <string name="scheduleEnd">Fin horario (Ej: 1930):</string>
+    <string name="lunch">Almuerzo:</string>
     <string name="load">Carga:</string>
     <string name="add">Añadir Personal</string>
     <string name="save">Guardar</string>

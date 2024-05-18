@@ -53,9 +53,14 @@ public class PersonAdapter extends BaseAdapter {
 
         TextView name = (TextView) convertView.findViewById(R.id.name);
         TextView schedule = (TextView) convertView.findViewById(R.id.schedule);
+        TextView lunch = (TextView) convertView.findViewById(R.id.lunch);
         TextView load = (TextView) convertView.findViewById(R.id.load);
         name.setText("Nombre: "+personnel.get(position).getName());
         schedule.setText("Horario: "+personnel.get(position).getScheduleStart()+" - "+personnel.get(position).getScheduleEnd());
+        if (personnel.get(position).getScheduleStart()%100 > 0)
+            lunch.setText("Almuerzo: "+(personnel.get(position).getScheduleStart()+400-(personnel.get(position).getScheduleStart()%100)));
+        else
+            lunch.setText("Almuerzo: "+(personnel.get(position).getScheduleStart()+300));
         load.setText("Carga: "+personnel.get(position).getLoad());
         Button edit = (Button) convertView.findViewById(R.id.edit);
         Button delete = (Button) convertView.findViewById(R.id.delete);
@@ -87,6 +92,7 @@ public class PersonAdapter extends BaseAdapter {
                                 db.update(editedPerson);
                                 Toast.makeText(context, "Cambios guardados exitosamente.", Toast.LENGTH_SHORT).show();
                                 MainActivity.wipeSchedule();
+                                MainActivity.sortPersonnel();
                             }
                             else {
                                 StringBuilder errors = new StringBuilder();
@@ -145,6 +151,7 @@ public class PersonAdapter extends BaseAdapter {
                         personnel = db.readAll();
                         notifyDataSetChanged();
                         MainActivity.wipeSchedule();
+                        MainActivity.sortPersonnel();
                     }
                 });
                 delete.setNegativeButton("No", new DialogInterface.OnClickListener() {
