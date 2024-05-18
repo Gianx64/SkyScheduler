@@ -519,6 +519,38 @@ public class MainActivity extends AppCompatActivity {
                                     person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
                             }
                         } else {
+                            switch (j) {
+                                case 0:
+                                    if (!schedule[(j*2) + 26].equals("-"))
+                                        if (i > 3)
+                                            for (int k = 0; k < 2; k++)
+                                                for (PersonClass person : present.get(j))
+                                                    if (person.getName().equals(schedule[(j*2) + 2]) || person.getName().equals(schedule[(j*2) + 3])) {
+                                                        present.get(j).remove(person);
+                                                        break;
+                                                    }
+                                    break;
+                                case 1:
+                                case 2:
+                                    if (!schedule[(j*2) + 26].equals("-"))
+                                        if (i > 3)
+                                            for (int k = 0; k < 2; k++)
+                                                for (PersonClass person : present.get(j))
+                                                    if (person.getName().equals(schedule[(j*2) + 2]) || person.getName().equals(schedule[(j*2) + 3])) {
+                                                        present.get(j).remove(person);
+                                                        break;
+                                                    }
+                                case 3:
+                                    if (!schedule[(j*2) + 22].equals("-"))
+                                        if (i > 3)
+                                            for (int k = 0; k < 2; k++)
+                                                for (PersonClass person : present.get(j))
+                                                    if (person.getName().equals(schedule[(j*2) - 2]) || person.getName().equals(schedule[(j*2) - 1])) {
+                                                        present.get(j).remove(person);
+                                                        break;
+                                                    }
+                                    break;
+                            }
                             Collections.shuffle(present.get(j));
                             Collections.sort(present.get(j), new Comparator<PersonClass>() {
                                 @Override
@@ -576,12 +608,6 @@ public class MainActivity extends AppCompatActivity {
                                 }
                     } else if (present.get(j).size() > 1) {
                         Collections.shuffle(present.get(j));
-                        Collections.sort(present.get(j), new Comparator<PersonClass>() {
-                            @Override
-                            public int compare(PersonClass o1, PersonClass o2) {
-                                return Integer.valueOf(o1.getLoad()).compareTo(o2.getLoad());
-                            }
-                        });
                         schedule[j+32] = present.get(j).get(0).assign();
                         for (int k=0; k<present.size(); k++)
                             for (int l = 0; l <present.get(k).size(); l++)
