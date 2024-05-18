@@ -73,14 +73,23 @@ public class MainActivity extends AppCompatActivity {
                 final EditText name = dialog.findViewById(R.id.nombre);
                 final EditText scheduleStart = dialog.findViewById(R.id.horarioInicio);
                 final EditText scheduleEnd = dialog.findViewById(R.id.horarioFin);
+                final EditText lunch = dialog.findViewById(R.id.lunch);
                 Button save = dialog.findViewById(R.id.save);
                 Button cancel = dialog.findViewById(R.id.cancel);
                 save.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         try {
-                            PersonClass person = new PersonClass(name.getText().toString(), Integer.parseInt(scheduleStart.getText().toString()), Integer.parseInt(scheduleEnd.getText().toString()));
-                            if (!name.getText().toString().equals("") && !name.getText().toString().equals("-") && Integer.parseInt(scheduleStart.getText().toString()) < 2360 && Integer.parseInt(scheduleEnd.getText().toString()) < 2360 && Integer.parseInt(scheduleStart.getText().toString()) < Integer.parseInt(scheduleEnd.getText().toString())) {
+                            PersonClass person = new PersonClass(name.getText().toString(), Integer.parseInt(scheduleStart.getText().toString()), Integer.parseInt(scheduleEnd.getText().toString()), Integer.parseInt(lunch.getText().toString()));
+                            if (!name.getText().toString().equals("")
+                                    && !name.getText().toString().equals("-")
+                                    && Integer.parseInt(scheduleStart.getText().toString()) < 2360
+                                    && Integer.parseInt(scheduleEnd.getText().toString()) < 2360
+                                    && Integer.parseInt(lunch.getText().toString()) < 2360
+                                    && Integer.parseInt(lunch.getText().toString()) % 100 == 0
+                                    && Integer.parseInt(scheduleStart.getText().toString()) < Integer.parseInt(scheduleEnd.getText().toString())
+                                    && Integer.parseInt(lunch.getText().toString()) < Integer.parseInt(scheduleEnd.getText().toString())
+                                    && Integer.parseInt(scheduleStart.getText().toString()) < Integer.parseInt(lunch.getText().toString())) {
                                 db.insert(person);
                                 Toast.makeText(getApplicationContext(), "Personal añadido exitosamente.", Toast.LENGTH_SHORT).show();
                                 wipeSchedule();
@@ -92,12 +101,20 @@ public class MainActivity extends AppCompatActivity {
                                     errors.append("\nNombre no ingresado.");
                                 if (name.getText().toString().equals("-"))
                                     errors.append("\nEse nombre causa problemas.");
-                                if (!(Integer.parseInt(scheduleStart.getText().toString()) < 2360))
+                                if (Integer.parseInt(scheduleStart.getText().toString()) > 2359)
                                     errors.append("\nInicio de horario mayor que 2359.");
-                                if (!(Integer.parseInt(scheduleEnd.getText().toString()) < 2360))
+                                if (Integer.parseInt(scheduleEnd.getText().toString()) > 2359)
                                     errors.append("\nFin de horario mayor que 2359.");
                                 if (Integer.parseInt(scheduleStart.getText().toString()) > Integer.parseInt(scheduleEnd.getText().toString()))
                                     errors.append("\nInicio de horario mayor que fin de horario.");
+                                if (Integer.parseInt(lunch.getText().toString()) > 2359)
+                                    errors.append("\nHora de almuerzo mayor que 2359.");
+                                if ((Integer.parseInt(lunch.getText().toString()) % 100) > 0)
+                                    errors.append("\nHora de almuerzo no es puntual.");
+                                if (Integer.parseInt(scheduleEnd.getText().toString()) <= Integer.parseInt(lunch.getText().toString()))
+                                    errors.append("\nHora de almuerzo mayor o igual que fin de horario.");
+                                if (Integer.parseInt(lunch.getText().toString()) <= Integer.parseInt(scheduleStart.getText().toString()))
+                                    errors.append("\nHora de almuerzo menor o igual que inicio de horario.");
                                 Toast.makeText(getApplicationContext(), errors, Toast.LENGTH_SHORT).show();
                             }
                         } catch (Exception e) {
@@ -111,6 +128,8 @@ public class MainActivity extends AppCompatActivity {
                                 errors.append("\nInicio de horario no ingresado.");
                             if (scheduleEnd.getText().toString().equals(""))
                                 errors.append("\nFin de horario no ingresado.");
+                            if (lunch.getText().toString().equals(""))
+                                errors.append("\nHora de almuerzo no ingresado.");
                             if (errors.length() == 7)
                                 errors.append("\n").append(e.getMessage());
                             Toast.makeText(getApplicationContext(), errors, Toast.LENGTH_SHORT).show();
@@ -248,10 +267,7 @@ public class MainActivity extends AppCompatActivity {
                 present.add(new ArrayList<PersonClass>());
                 for (PersonClass person : personnel)
                     if (person.getScheduleStart() <= (10 + i) * 100 && person.getScheduleEnd() >= (11 + i) * 100)   //Si la persona está disponible en esa hora
-                        if (person.getScheduleStart()%100 > 0) {    //Si la persona entra a una hora inexacta (Ej: 9:30)
-                            if (person.getScheduleStart()/100 != i+6)   //Si no es hora de almuerzo de esa persona
-                                present.get(i).add(person);
-                        } else if (person.getScheduleStart()/100 != i+7)    //Si no es hora de almuerzo de esa persona
+                        if (person.getLunch()/100 != i+10)    //Si no es hora de almuerzo de esa persona
                             present.get(i).add(person);
             }
             /*for (int i=0; i<present.size(); i++) {
@@ -487,7 +503,8 @@ public class MainActivity extends AppCompatActivity {
                 for (PersonClass person : personnel)
                     if (person.getScheduleStart() <= (17 + i) * 100 && person.getScheduleEnd() >= (18 + i) * 100)   //Si la persona está disponible en esa hora
                         if (!person.getName().equals(schedule[(i*2)+14]) && !person.getName().equals(schedule[(i*2)+15]))   //Si no topa con elevador principal
-                            present.get(i).add(person);
+                            if (person.getLunch()/100 != i+17)    //Si no es hora de almuerzo de esa persona (debería ser imposible)
+                                present.get(i).add(person);
             }
             /*for (int i=0; i<present.size(); i++) {
                 Log.d("info", "Personas para las "+(i+17));
@@ -585,17 +602,12 @@ public class MainActivity extends AppCompatActivity {
                 present.add(new ArrayList<PersonClass>());
                 for (PersonClass person : personnel)
                     if (person.getScheduleStart() <= (11 + i) * 100 && person.getScheduleEnd() >= (12 + i) * 100)   //Si la persona está disponible en esa hora
-                        if (!person.getName().equals(schedule[(i*2)+2]) && !person.getName().equals(schedule[(i*2)+3])) {   //Si no topa con elevador principal
-                            if (person.getScheduleStart() % 100 > 0) {    //Si la persona entra a una hora inexacta (Ej: 9:30)
-                                if (person.getScheduleStart() / 100 != i + 7)   //Si no es hora de almuerzo de esa persona
-                                    present.get(i).add(person);
-                            } else if (person.getScheduleStart() / 100 != i + 8) {  //Si no es hora de almuerzo de esa persona
-                                present.get(i).add(person);
-                            } else if (i == 6) {
-                                if (!person.getName().equals(schedule[24]) && !person.getName().equals(schedule[25]))   //Si no topa con elevador secundario
-                                    present.get(i).add(person);
-                            } else present.get(i).add(person);
-                        }
+                        if (!person.getName().equals(schedule[(i*2)+2]) && !person.getName().equals(schedule[(i*2)+3])) //Si no topa con elevador principal
+                            if (person.getLunch() / 100 != i + 11)  //Si no es hora de almuerzo de esa persona
+                                if (i == 6) {
+                                    if (!person.getName().equals(schedule[24]) && !person.getName().equals(schedule[25]))   //Si no topa con elevador secundario
+                                        present.get(i).add(person);
+                                } else present.get(i).add(person);
             }
             /*for (int i=0; i<present.size(); i++) {
                 Log.d("info", "Personas para las "+(i+11));

@@ -3,29 +3,30 @@ package com.gianx64.skyscheduler;
 public class PersonClass {
     int id;
     String name;
-    int scheduleStart;
-    int scheduleEnd;
-    int load;
+    int scheduleStart, scheduleEnd, lunch, load;
 
     public PersonClass() {
         this.name = "";
         this.scheduleStart = 0;
         this.scheduleEnd = 0;
+        this.lunch = 0;
         this.load = 0;
     }
 
-    public PersonClass(String name, int scheduleStart, int scheduleEnd) {
+    public PersonClass(String name, int scheduleStart, int scheduleEnd, int lunch) {
         this.name = name;
         this.scheduleStart = scheduleStart;
         this.scheduleEnd = scheduleEnd;
+        this.lunch = lunch;
         this.load = 0;
     }
 
-    public PersonClass(int id, String name, int scheduleStart, int scheduleEnd) {
+    public PersonClass(int id, String name, int scheduleStart, int scheduleEnd, int lunch) {
         this.id = id;
         this.name = name;
         this.scheduleStart = scheduleStart;
         this.scheduleEnd = scheduleEnd;
+        this.lunch = lunch;
         this.load = 0;
     }
 
@@ -58,6 +59,14 @@ public class PersonClass {
     }
 
     public void setScheduleEnd(int scheduleEnd) { this.scheduleEnd = scheduleEnd; }
+
+    public int getLunch() {
+        return lunch;
+    }
+
+    public void setLunch(int lunch) {
+        this.lunch = lunch;
+    }
 
     public int getLoad() {
         return load;
