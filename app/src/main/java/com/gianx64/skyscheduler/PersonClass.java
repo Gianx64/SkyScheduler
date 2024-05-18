@@ -67,11 +67,8 @@ public class PersonClass {
         this.load = load;
     }
 
-    public void addLoad() {
+    public String assign() {
         this.load++;
-    }
-
-    public void subLoad() {
-        this.load--;
+        return this.name;
     }
 }

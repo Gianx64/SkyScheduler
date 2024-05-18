@@ -8,8 +8,8 @@ android {
         applicationId "com.gianx64.skyscheduler"
         minSdkVersion 15
         targetSdkVersion 33
-        versionCode 1
-        versionName "1.0"
+        versionCode 3
+        versionName "3.0"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }

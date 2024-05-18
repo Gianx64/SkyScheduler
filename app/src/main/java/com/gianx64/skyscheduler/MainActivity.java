@@ -4,7 +4,6 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -17,11 +16,11 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Random;
+import java.util.Comparator;
 
 public class MainActivity extends AppCompatActivity {
     PersonDB db;
-    ArrayList<PersonClass> personnel;
+    static ArrayList<PersonClass> personnel;
     PersonAdapter adapter;
     ListView personnel_list;
     static TextView[] textViews;
@@ -34,6 +33,7 @@ public class MainActivity extends AppCompatActivity {
 
         db = new PersonDB(this);
         personnel = db.readAll();
+        sortPersonnel();
         adapter = new PersonAdapter(this, personnel, db);
         personnel_list = findViewById(R.id.person_list);
         personnel_list.setAdapter(adapter);
@@ -112,10 +112,11 @@ public class MainActivity extends AppCompatActivity {
                             if (scheduleEnd.getText().toString().equals(""))
                                 errors.append("\nFin de horario no ingresado.");
                             if (errors.length() == 7)
-                                errors.append("\n"+e.getMessage());
+                                errors.append("\n").append(e.getMessage());
                             Toast.makeText(getApplicationContext(), errors, Toast.LENGTH_SHORT).show();
                         }
                         personnel = db.readAll();
+                        sortPersonnel();
                         adapter.notifyDataSetChanged();
                         dialog.dismiss();
                     }
@@ -133,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 genL26(schedule, personnel);
                 genL25(schedule, personnel);
-                fillTours(schedule, personnel);
+                genTours(schedule, personnel);
 
                 for (int i=0; i<16; i++) {
                     if (!schedule[i * 2].equals(schedule[(i * 2) + 1]))
@@ -176,7 +177,7 @@ public class MainActivity extends AppCompatActivity {
         });
         gen_tours.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                fillTours(schedule, personnel);
+                genTours(schedule, personnel);
                 for (int i=16; i<textViews.length; i++) textViews[i].setText(schedule[i+16]);
                 adapter.notifyDataSetChanged();
             }
@@ -224,10 +225,17 @@ public class MainActivity extends AppCompatActivity {
         for (int i=16; i<textViews.length; i++) textViews[i].setText(schedule[i+16]);
     }
 
+    public static void sortPersonnel() {
+        Collections.sort(personnel, new Comparator<PersonClass>() {
+            @Override
+            public int compare(PersonClass o1, PersonClass o2) {
+                return Integer.valueOf(o1.getScheduleStart()).compareTo(o2.getScheduleStart());
+            }
+        });
+    }
+
     public void genL26(String[] schedule, ArrayList<PersonClass> personnel){
-        Random random = new Random();   //Generador de numero aleatorio
-        int chosen;                     //Persona elegida
-        int[] present = new int[12];    //Cantidad de personal presente en cada hora
+        ArrayList<ArrayList<PersonClass>> present = new ArrayList<ArrayList<PersonClass>>();
         for (int i = 0; i < 24; i++)
             schedule[i] = "-";
         if (personnel.size() == 0)
@@ -236,559 +244,352 @@ public class MainActivity extends AppCompatActivity {
         else {
             for (PersonClass person : personnel)
                 person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
-            for (int i=0; i<present.length; i++) {
-                present[i] = 0;
+            for (int i=0; i<12; i++) {
+                present.add(new ArrayList<PersonClass>());
                 for (PersonClass person : personnel)
-                    if (person.getScheduleStart()%100 > 0) {
-                        if (person.getScheduleStart()/100 != i+6)
-                            if (person.getScheduleStart() <= (10 + i) * 100 && person.getScheduleEnd() >= (11 + i) * 100)
-                                present[i]++;
-                    } else if (person.getScheduleStart()/100 != i+7)
-                        if (person.getScheduleStart() <= (10 + i) * 100 && person.getScheduleEnd() >= (11 + i) * 100)
-                            present[i]++;
+                    if (person.getScheduleStart() <= (10 + i) * 100 && person.getScheduleEnd() >= (11 + i) * 100)   //Si la persona está disponible en esa hora
+                        if (person.getScheduleStart()%100 > 0) {    //Si la persona entra a una hora inexacta (Ej: 9:30)
+                            if (person.getScheduleStart()/100 != i+6)   //Si no es hora de almuerzo de esa persona
+                                present.get(i).add(person);
+                        } else if (person.getScheduleStart()/100 != i+7)    //Si no es hora de almuerzo de esa persona
+                            present.get(i).add(person);
             }
-            for (int i = 0; i < 4; i++) {   //Llenar elevador principal desde las 10:00 hasta las 12:00
-                if (present[i/2] > 0) {
-                    while (true) {
-                        chosen = random.nextInt(personnel.size());
-                        //Log.d("info", "i = "+i+", chosen: "+personnel.get(chosen).getName());
-                        if (personnel.get(chosen).getScheduleStart() <= (10 + (i / 2)) * 100 && personnel.get(chosen).getScheduleEnd() >= (11 + (i / 2)) * 100)
-                            if (i > 1) {    //Topa con tour
-                                if (present[i / 2] == 1) {
-                                    schedule[i] = personnel.get(chosen).getName();
-                                    if (!personnel.get(chosen).getName().equals(schedule[(i / 2) + 31]))
-                                        personnel.get(chosen).addLoad();
-                                    else {
-                                        for (int j = 32; j < schedule.length; j++)
-                                            schedule[j] = "-";
-                                        for (PersonClass person : personnel)
-                                            person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
-                                    }
-                                    break;
-                                } else if (!schedule[i - (i % 2)].equals(personnel.get(chosen).getName()) && !schedule[(i - (i % 2)) + 1].equals(personnel.get(chosen).getName())) {
-                                    schedule[i] = personnel.get(chosen).getName();
-                                    if (!personnel.get(chosen).getName().equals(schedule[(i / 2) + 31]))
-                                        personnel.get(chosen).addLoad();
-                                    else {
-                                        for (int j = 32; j < schedule.length; j++)
-                                            schedule[j] = "-";
-                                        for (PersonClass person : personnel)
-                                            person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
-                                    }
-                                    break;
+            /*for (int i=0; i<present.size(); i++) {
+                Log.d("info", "Personas para las "+(i+10));
+                for (int j=0; j<present.get(i).size(); j++)
+                    Log.d("info", present.get(i).get(j).getName());
+            }*/
+            for (int i=0; i <= personnel.size(); i++)  //Repite la cantidad del personal
+                for (int j=present.size()-1; j >= 0; j--)   //Recorre todos los horarios
+                    if (present.get(j).size() == i) {
+                        switch (j) {
+                            case 0:
+                            case 11:    //No topa
+                                if (i == 0) {
+                                    schedule[j*2] = "Sin personal.";
+                                    schedule[(j*2) + 1] = "Sin personal.";
+                                } else if (i == 1) {
+                                    schedule[j*2] = present.get(j).get(0).assign();
+                                    schedule[(j*2) + 1] = present.get(j).get(0).assign();
+                                } else if (i == 2) {
+                                    schedule[j*2] = present.get(j).get(0).assign();
+                                    schedule[(j*2) + 1] = present.get(j).get(1).assign();
+                                } else {
+                                    Collections.shuffle(present.get(j));
+                                    Collections.sort(present.get(j), new Comparator<PersonClass>() {
+                                        @Override
+                                        public int compare(PersonClass o1, PersonClass o2) {
+                                            return Integer.valueOf(o1.getLoad()).compareTo(o2.getLoad());
+                                        }
+                                    });
+                                    schedule[j*2] = present.get(j).get(0).assign();
+                                    schedule[(j*2) + 1] = present.get(j).get(1).assign();
                                 }
-                            } else if (i == 0) {
-                                schedule[i] = personnel.get(chosen).getName();
-                                personnel.get(chosen).addLoad();
                                 break;
-                            } else {
-                                if (present[i/2] == 1) {
-                                    schedule[i] = personnel.get(chosen).getName();
-                                    personnel.get(chosen).addLoad();
-                                    break;
-                                } else if (!schedule[i-(i%2)].equals(personnel.get(chosen).getName()) && !schedule[(i-(i%2))+1].equals(personnel.get(chosen).getName())) {
-                                    schedule[i] = personnel.get(chosen).getName();
-                                    personnel.get(chosen).addLoad();
-                                    break;
+                            case 1:
+                            case 2:
+                            case 3:
+                            case 4:
+                            case 5:
+                            case 6: //Topa con tour
+                                if (i == 0) {
+                                    schedule[j*2] = "Sin personal.";
+                                    schedule[(j*2) + 1] = "Sin personal.";
+                                } else if (i == 1) {
+                                    if (present.get(j).get(0).getName().equals(schedule[j + 32])) {
+                                        for (int k = 32; k < schedule.length; k++)
+                                            schedule[k] = "-";
+                                        for (PersonClass person : personnel)
+                                            person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
+                                    }
+                                    schedule[j*2] = present.get(j).get(0).assign();
+                                    schedule[(j*2) + 1] = present.get(j).get(0).assign();
+                                } else if (i == 2) {
+                                    if (present.get(j).get(0).getName().equals(schedule[j + 32]) || present.get(j).get(1).getName().equals(schedule[j + 32])) {
+                                        for (int k = 32; k < schedule.length; k++)
+                                            schedule[k] = "-";
+                                        for (PersonClass person : personnel)
+                                            person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
+                                    }
+                                    schedule[j*2] = present.get(j).get(0).assign();
+                                    schedule[(j*2) + 1] = present.get(j).get(1).assign();
+                                } else {
+                                    if (!schedule[(j*2) + 2].equals("-"))
+                                        if (i > 3)
+                                            for (int k = 0; k < 2; k++)
+                                                for (PersonClass person : present.get(j))
+                                                    if (person.getName().equals(schedule[(j*2) + 2]) || person.getName().equals(schedule[(j*2) + 3])) {
+                                                        present.get(j).remove(person);
+                                                        break;
+                                                    }
+                                    if (!schedule[(j*2) - 2].equals("-"))
+                                        if (i > 3)
+                                            for (int k = 0; k < 2; k++)
+                                                for (PersonClass person : present.get(j))
+                                                    if (person.getName().equals(schedule[(j*2) - 2]) || person.getName().equals(schedule[(j*2) - 1])) {
+                                                        present.get(j).remove(person);
+                                                        break;
+                                                    }
+                                    Collections.shuffle(present.get(j));
+                                    Collections.sort(present.get(j), new Comparator<PersonClass>() {
+                                        @Override
+                                        public int compare(PersonClass o1, PersonClass o2) {
+                                            return Integer.valueOf(o1.getLoad()).compareTo(o2.getLoad());
+                                        }
+                                    });
+                                    if (present.get(j).get(0).getName().equals(schedule[j + 32]) || present.get(j).get(1).getName().equals(schedule[j + 32])) {
+                                        for (int k = 32; k < schedule.length; k++)
+                                            schedule[k] = "-";
+                                        for (PersonClass person : personnel)
+                                            person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
+                                    }
+                                    schedule[j*2] = present.get(j).get(0).assign();
+                                    schedule[(j*2) + 1] = present.get(j).get(1).assign();
                                 }
-                            }
+                                break;
+                            case 7: //Topa con tour y elevador secundario
+                                if (i == 0) {
+                                    schedule[j*2] = "Sin personal.";
+                                    schedule[(j*2) + 1] = "Sin personal.";
+                                } else if (i == 1) {
+                                    if (present.get(j).get(0).getName().equals(schedule[24]) || present.get(j).get(0).getName().equals(schedule[25]))
+                                        for (int k = 24; k < 32; k++)
+                                            schedule[k] = "-";
+                                    if (present.get(j).get(0).getName().equals(schedule[38]))
+                                        for (int k = 32; k < schedule.length; k++)
+                                            schedule[k] = "-";
+                                    for (PersonClass person : personnel)
+                                        person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
+                                    schedule[j*2] = present.get(j).get(0).assign();
+                                    schedule[(j*2) + 1] = present.get(j).get(0).assign();
+                                } else if (i == 2) {
+                                    if (present.get(j).get(0).getName().equals(schedule[24]) || present.get(j).get(0).getName().equals(schedule[25]))
+                                        for (int k = 24; k < 32; k++)
+                                            schedule[k] = "-";
+                                    if (present.get(j).get(0).getName().equals(schedule[38]))
+                                        for (int k = 32; k < schedule.length; k++)
+                                            schedule[k] = "-";
+                                    for (PersonClass person : personnel)
+                                        person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
+                                    schedule[j*2] = present.get(j).get(0).assign();
+                                    schedule[(j*2) + 1] = present.get(j).get(1).assign();
+                                } else {
+                                    if (!schedule[(j*2) + 2].equals("-"))
+                                        if (i > 3)
+                                            for (int k = 0; k < 2; k++)
+                                                for (PersonClass person : present.get(j))
+                                                    if (person.getName().equals(schedule[(j*2) + 2]) || person.getName().equals(schedule[(j*2) + 3])) {
+                                                        present.get(j).remove(person);
+                                                        break;
+                                                    }
+                                    if (!schedule[(j*2) - 2].equals("-"))
+                                        if (i > 3)
+                                            for (int k = 0; k < 2; k++)
+                                                for (PersonClass person : present.get(j))
+                                                    if (person.getName().equals(schedule[(j*2) - 2]) || person.getName().equals(schedule[(j*2) - 1])) {
+                                                        present.get(j).remove(person);
+                                                        break;
+                                                    }
+                                    Collections.shuffle(present.get(j));
+                                    Collections.sort(present.get(j), new Comparator<PersonClass>() {
+                                        @Override
+                                        public int compare(PersonClass o1, PersonClass o2) {
+                                            return Integer.valueOf(o1.getLoad()).compareTo(o2.getLoad());
+                                        }
+                                    });
+                                    if (present.get(j).get(0).getName().equals(schedule[24]) || present.get(j).get(0).getName().equals(schedule[25]))
+                                        for (int k = 24; k < 32; k++)
+                                            schedule[k] = "-";
+                                    if (present.get(j).get(0).getName().equals(schedule[38]))
+                                        for (int k = 32; k < schedule.length; k++)
+                                            schedule[k] = "-";
+                                    for (PersonClass person : personnel)
+                                        person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
+                                    schedule[j*2] = present.get(j).get(0).assign();
+                                    schedule[(j*2) + 1] = present.get(j).get(1).assign();
+                                }
+                                break;
+                            case 8:
+                            case 9:
+                            case 10:    //Topa con elevador secundario
+                                if (i == 0) {
+                                    schedule[j*2] = "Sin personal.";
+                                    schedule[(j*2) + 1] = "Sin personal.";
+                                } else if (i == 1) {
+                                    if (present.get(j).get(0).getName().equals(schedule[(j*2)+10]) || present.get(j).get(0).getName().equals(schedule[(j*2)+11])) {
+                                        for (int k = 24; k < 32; k++)
+                                            schedule[k] = "-";
+                                        for (PersonClass person : personnel)
+                                            person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
+                                    }
+                                    schedule[j*2] = present.get(j).get(0).assign();
+                                    schedule[(j*2) + 1] = present.get(j).get(0).assign();
+                                } else if (i == 2) {
+                                    if (present.get(j).get(0).getName().equals(schedule[(j*2)+10]) || present.get(j).get(0).getName().equals(schedule[(j*2)+11])) {
+                                        for (int k = 24; k < 32; k++)
+                                            schedule[k] = "-";
+                                        for (PersonClass person : personnel)
+                                            person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
+                                    }
+                                    schedule[j*2] = present.get(j).get(0).assign();
+                                    schedule[(j*2) + 1] = present.get(j).get(1).assign();
+                                } else {
+                                    if (!schedule[(j*2) + 2].equals("-"))
+                                        if (i > 3)
+                                            for (int k = 0; k < 2; k++)
+                                                for (PersonClass person : present.get(j))
+                                                    if (person.getName().equals(schedule[(j*2) + 2]) || person.getName().equals(schedule[(j*2) + 3])) {
+                                                        present.get(j).remove(person);
+                                                        break;
+                                                    }
+                                    if (!schedule[(j*2) - 2].equals("-"))
+                                        if (i > 3)
+                                            for (int k = 0; k < 2; k++)
+                                                for (PersonClass person : present.get(j))
+                                                    if (person.getName().equals(schedule[(j*2) - 2]) || person.getName().equals(schedule[(j*2) - 1])) {
+                                                        present.get(j).remove(person);
+                                                        break;
+                                                    }
+                                    Collections.shuffle(present.get(j));
+                                    Collections.sort(present.get(j), new Comparator<PersonClass>() {
+                                        @Override
+                                        public int compare(PersonClass o1, PersonClass o2) {
+                                            return Integer.valueOf(o1.getLoad()).compareTo(o2.getLoad());
+                                        }
+                                    });
+                                    if (present.get(j).get(0).getName().equals(schedule[(j*2)+10]) || present.get(j).get(0).getName().equals(schedule[(j*2)+11])) {
+                                        for (int k = 24; k < 32; k++)
+                                            schedule[k] = "-";
+                                        for (PersonClass person : personnel)
+                                            person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
+                                    }
+                                    schedule[j*2] = present.get(j).get(0).assign();
+                                    schedule[(j*2) + 1] = present.get(j).get(1).assign();
+                                }
+                                break;
+                        }
                     }
-                } else schedule[i] = "Sin personal.";
-            }
-            //Log.d("info", "Elevador principal lleno desde las 10:00 hasta las 12:00");
-            for (int i = 23; i > 17; i--) { //Llenar elevador principal desde las 22:00 hasta las 20:00
-                if (present[i/2] > 0) {
-                    while (true) {
-                        chosen = random.nextInt(personnel.size());
-                        //Log.d("info", "i = "+i+", chosen: "+personnel.get(chosen).getName());
-                        if (personnel.get(chosen).getScheduleStart() <= (10 + (i / 2)) * 100 && personnel.get(chosen).getScheduleEnd() >= (11 + (i / 2)) * 100)
-                            if (i < 22) {   //Topa con elevador secundario
-                                if (present[i / 2] == 1) {
-                                    schedule[i] = personnel.get(chosen).getName();
-                                    if (!personnel.get(chosen).getName().equals(schedule[(i-(i%2))+10]) && !personnel.get(chosen).getName().equals(schedule[(i-(i%2))+11]))
-                                        personnel.get(chosen).addLoad();
-                                    else {
-                                        for (int j = 24; j < 32; j++)
-                                            schedule[j] = "-";
-                                        for (PersonClass person : personnel)
-                                            person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
-                                    }
-                                    break;
-                                } else if (!schedule[i - (i % 2)].equals(personnel.get(chosen).getName()) && !schedule[(i - (i % 2)) + 1].equals(personnel.get(chosen).getName())) {
-                                    schedule[i] = personnel.get(chosen).getName();
-                                    if (!personnel.get(chosen).getName().equals(schedule[(i-(i%2))+10]) && !personnel.get(chosen).getName().equals(schedule[(i-(i%2))+11]))
-                                        personnel.get(chosen).addLoad();
-                                    else {
-                                        for (int j = 24; j < 32; j++)
-                                            schedule[j] = "-";
-                                        for (PersonClass person : personnel)
-                                            person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
-                                    }
-                                    break;
-                                }
-                            } else {
-                                if (present[i / 2] == 1) {
-                                    schedule[i] = personnel.get(chosen).getName();
-                                    personnel.get(chosen).addLoad();
-                                    break;
-                                } else if (!schedule[i - (i % 2)].equals(personnel.get(chosen).getName()) && !schedule[(i - (i % 2)) + 1].equals(personnel.get(chosen).getName())) {
-                                    schedule[i] = personnel.get(chosen).getName();
-                                    personnel.get(chosen).addLoad();
-                                    break;
-                                }
-                            }
-                    }
-                } else schedule[i] = "Sin personal.";
-            }
-            //Log.d("info", "Elevador principal lleno desde las 22:00 hasta las 20:00");
-            for (int i = 17; i > 3; i--) {  //Llenar elevador principal desde las 20:00 hasta las 12:00
-                if (present[i/2] > 0) {
-                    while (true) {
-                        chosen = random.nextInt(personnel.size());
-                        //Log.d("info", "i = "+i+", chosen: "+personnel.get(chosen).getName()+" "+personnel.get(chosen).getLoad());
-                        if (personnel.get(chosen).getScheduleStart() <= (10 + (i / 2)) * 100 && personnel.get(chosen).getScheduleEnd() >= (11 + (i / 2)) * 100)
-                            if (i == 17 || i == 16) {   //Topa con elevador secundario
-                                if (present[8] == 1) {
-                                    schedule[i] = personnel.get(chosen).getName();
-                                    personnel.get(chosen).addLoad();
-                                    break;
-                                } else if (present[8] > 3) {
-                                    if (!personnel.get(chosen).getName().equals(schedule[16]) && !personnel.get(chosen).getName().equals(schedule[17]) && !personnel.get(chosen).getName().equals(schedule[18]) && !personnel.get(chosen).getName().equals(schedule[19])) {
-                                        if (!personnel.get(chosen).getName().equals(schedule[26]) && !personnel.get(chosen).getName().equals(schedule[27])) {
-                                            schedule[i] = personnel.get(chosen).getName();
-                                            personnel.get(chosen).addLoad();
-                                            break;
-                                        } else {
-                                            schedule[i] = personnel.get(chosen).getName();
-                                            for (int j = 24; j < 32; j++)
-                                                schedule[j] = "-";
-                                            for (PersonClass person : personnel)
-                                                person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
-                                            break;
-                                        }
-                                    }
-                                } else if (!personnel.get(chosen).getName().equals(schedule[16]) && !personnel.get(chosen).getName().equals(schedule[17])) {
-                                    if (!personnel.get(chosen).getName().equals(schedule[26]) && !personnel.get(chosen).getName().equals(schedule[27])) {
-                                        schedule[i] = personnel.get(chosen).getName();
-                                        personnel.get(chosen).addLoad();
-                                        break;
-                                    } else {
-                                        schedule[i] = personnel.get(chosen).getName();
-                                        for (int j = 24; j < 32; j++)
-                                            schedule[j] = "-";
-                                        for (PersonClass person : personnel)
-                                            person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
-                                        break;
-                                    }
-                                }
-                            } else if (i == 15 || i == 14) {    //Topa con elevador secundario y tour
-                                if (present[7] == 1) {
-                                    schedule[i] = personnel.get(chosen).getName();
-                                    personnel.get(chosen).addLoad();
-                                    break;
-                                } else if (present[7] > 3) {
-                                    if (!personnel.get(chosen).getName().equals(schedule[14]) && !personnel.get(chosen).getName().equals(schedule[15]) && !personnel.get(chosen).getName().equals(schedule[16]) && !personnel.get(chosen).getName().equals(schedule[17])) {
-                                        if (!personnel.get(chosen).getName().equals(schedule[24]) && !personnel.get(chosen).getName().equals(schedule[25])) {
-                                            if (!personnel.get(chosen).getName().equals(schedule[38])) {
-                                                schedule[i] = personnel.get(chosen).getName();
-                                                if (personnel.get(chosen).getName().equals(schedule[38])) {
-                                                    for (int j = 32; j < schedule.length; j++)
-                                                        schedule[j] = "-";
-                                                    for (PersonClass person : personnel)
-                                                        person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
-                                                }
-                                                else personnel.get(chosen).addLoad();
-                                                break;
-                                            } else {
-                                                schedule[i] = personnel.get(chosen).getName();
-                                                for (int j = 32; j < schedule.length; j++)
-                                                    schedule[j] = "-";
-                                                for (PersonClass person : personnel)
-                                                    person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
-                                                break;
-                                            }
-                                        } else {
-                                            schedule[i] = personnel.get(chosen).getName();
-                                            if (personnel.get(chosen).getName().equals(schedule[38])) //Caso que debería ser imposible
-                                                for (int j = 32; j < schedule.length; j++)
-                                                    schedule[j] = "-";
-                                            for (int j = 24; j < 32; j++)
-                                                schedule[j] = "-";
-                                            for (PersonClass person : personnel)
-                                                person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
-                                            break;
-                                        }
-                                    }
-                                } else if (!personnel.get(chosen).getName().equals(schedule[14]) && !personnel.get(chosen).getName().equals(schedule[15])) {
-                                    if (!personnel.get(chosen).getName().equals(schedule[24]) && !personnel.get(chosen).getName().equals(schedule[25])) {
-                                        if (!personnel.get(chosen).getName().equals(schedule[38])) {
-                                            schedule[i] = personnel.get(chosen).getName();
-                                            if (personnel.get(chosen).getName().equals(schedule[38])) {
-                                                for (int j = 32; j < schedule.length; j++)
-                                                    schedule[j] = "-";
-                                                for (PersonClass person : personnel)
-                                                    person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
-                                            }
-                                            else personnel.get(chosen).addLoad();
-                                            break;
-                                        } else {
-                                            schedule[i] = personnel.get(chosen).getName();
-                                            for (int j = 32; j < schedule.length; j++)
-                                                schedule[j] = "-";
-                                            for (PersonClass person : personnel)
-                                                person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
-                                            break;
-                                        }
-                                    } else {
-                                        schedule[i] = personnel.get(chosen).getName();
-                                        if (personnel.get(chosen).getName().equals(schedule[38])) //Caso que debería ser imposible
-                                            for (int j = 32; j < schedule.length; j++)
-                                                schedule[j] = "-";
-                                        for (int j = 24; j < 32; j++)
-                                            schedule[j] = "-";
-                                        for (PersonClass person : personnel)
-                                            person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
-                                        break;
-                                    }
-                                }
-                            } else if (i < 12 && i > 5) {   //Topa con tour y horas de almuerzo
-                                if (present[i / 2] == 1) {
-                                    if (personnel.get(chosen).getScheduleStart()%100 > 0) {
-                                        if (personnel.get(chosen).getScheduleStart()/100 != (i/2)+6) {
-                                            schedule[i] = personnel.get(chosen).getName();
-                                            personnel.get(chosen).addLoad();
-                                            break;
-                                        }
-                                    } else if (personnel.get(chosen).getScheduleStart()/100 != (i/2)+7) {
-                                        schedule[i] = personnel.get(chosen).getName();
-                                        personnel.get(chosen).addLoad();
-                                        break;
-                                    }
-                                } else if (present[i / 2] > 3) {
-                                    if (!personnel.get(chosen).getName().equals(schedule[i-(i%2)]) && !personnel.get(chosen).getName().equals(schedule[i-(i%2)+1]) && !personnel.get(chosen).getName().equals(schedule[i-(i%2)+2]) && !personnel.get(chosen).getName().equals(schedule[i-(i%2)+3])
-                                            && !personnel.get(chosen).getName().equals(schedule[31+(i/2)])) {
-                                        if (personnel.get(chosen).getScheduleStart() % 100 > 0) {
-                                            if (personnel.get(chosen).getScheduleStart() / 100 != (i / 2) + 6) {
-                                                schedule[i] = personnel.get(chosen).getName();
-                                                personnel.get(chosen).addLoad();
-                                                break;
-                                            }
-                                        } else if (personnel.get(chosen).getScheduleStart() / 100 != (i / 2) + 7) {
-                                            schedule[i] = personnel.get(chosen).getName();
-                                            personnel.get(chosen).addLoad();
-                                            break;
-                                        }
-                                    } else if (personnel.get(chosen).getName().equals(schedule[31+(i/2)])) {
-                                        if (personnel.get(chosen).getScheduleStart()%100 > 0) {
-                                            if (personnel.get(chosen).getScheduleStart()/100 != (i/2)+6) {
-                                                schedule[i] = personnel.get(chosen).getName();
-                                                for (int j = 32; j < schedule.length; j++)
-                                                    schedule[j] = "-";
-                                                for (PersonClass person : personnel)
-                                                    person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
-                                                break;
-                                            }
-                                        } else if (personnel.get(chosen).getScheduleStart()/100 != (i/2)+7) {
-                                            schedule[i] = personnel.get(chosen).getName();
-                                            for (int j = 32; j < schedule.length; j++)
-                                                schedule[j] = "-";
-                                            for (PersonClass person : personnel)
-                                                person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
-                                            break;
-                                        }
-                                    }
-                                } else if (!personnel.get(chosen).getName().equals(schedule[i-(i%2)]) && !personnel.get(chosen).getName().equals(schedule[i-(i%2)+1])
-                                        && !personnel.get(chosen).getName().equals(schedule[31+(i/2)])) {
-                                    if (personnel.get(chosen).getScheduleStart() % 100 > 0) {
-                                        if (personnel.get(chosen).getScheduleStart() / 100 != (i / 2) + 6) {
-                                            schedule[i] = personnel.get(chosen).getName();
-                                            personnel.get(chosen).addLoad();
-                                            break;
-                                        }
-                                    } else if (personnel.get(chosen).getScheduleStart() / 100 != (i / 2) + 7) {
-                                        schedule[i] = personnel.get(chosen).getName();
-                                        personnel.get(chosen).addLoad();
-                                        break;
-                                    }
-                                } else if (personnel.get(chosen).getName().equals(schedule[31+(i/2)])) {
-                                    if (personnel.get(chosen).getScheduleStart()%100 > 0) {
-                                        if (personnel.get(chosen).getScheduleStart()/100 != (i/2)+6) {
-                                            schedule[i] = personnel.get(chosen).getName();
-                                            for (int j = 32; j < schedule.length; j++)
-                                                schedule[j] = "-";
-                                            for (PersonClass person : personnel)
-                                                person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
-                                            break;
-                                        }
-                                    } else if (personnel.get(chosen).getScheduleStart()/100 != (i/2)+7) {
-                                        schedule[i] = personnel.get(chosen).getName();
-                                        for (int j = 32; j < schedule.length; j++)
-                                            schedule[j] = "-";
-                                        for (PersonClass person : personnel)
-                                            person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
-                                        break;
-                                    }
-                                }
-                            } else {    //Topa con tour
-                                if (present[i / 2] == 1) {
-                                    schedule[i] = personnel.get(chosen).getName();
-                                    if (personnel.get(chosen).getName().equals(schedule[31+(i/2)])) {
-                                        for (int j = 32; j < schedule.length; j++)
-                                            schedule[j] = "-";
-                                        for (PersonClass person : personnel)
-                                            person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
-                                    }
-                                    else personnel.get(chosen).addLoad();
-                                    break;
-                                } else if (present[i / 2] > 3) {
-                                    if (!personnel.get(chosen).getName().equals(schedule[i-(i%2)]) && !personnel.get(chosen).getName().equals(schedule[i-(i%2)+1]) && !personnel.get(chosen).getName().equals(schedule[i-(i%2)+2]) && !personnel.get(chosen).getName().equals(schedule[i-(i%2)+3])) {
-                                        schedule[i] = personnel.get(chosen).getName();
-                                        if (personnel.get(chosen).getName().equals(schedule[31 + (i / 2)])) {
-                                            for (int j = 32; j < schedule.length; j++)
-                                                schedule[j] = "-";
-                                            for (PersonClass person : personnel)
-                                                person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
-                                        }
-                                        else personnel.get(chosen).addLoad();
-                                        break;
-                                    }
-                                } else if (!personnel.get(chosen).getName().equals(schedule[i-(i%2)]) && !personnel.get(chosen).getName().equals(schedule[i-(i%2)+1])) {
-                                    schedule[i] = personnel.get(chosen).getName();
-                                    if (personnel.get(chosen).getName().equals(schedule[31 + (i / 2)])) {
-                                        for (int j = 32; j < schedule.length; j++)
-                                            schedule[j] = "-";
-                                        for (PersonClass person : personnel)
-                                            person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
-                                    }
-                                    else personnel.get(chosen).addLoad();
-                                    break;
-                                }
-                            }
-                    }
-                } else schedule[i] = "Sin personal.";
-            }
-            //Log.d("info", "Elevador principal lleno desde las 20:00 hasta las 12:00");
         }
     }
 
     public void genL25(String[] schedule, ArrayList<PersonClass> personnel){
-        Random random = new Random();   //Generador de numero aleatorio
-        int chosen;                     //Persona elegida
-        int[] present = new int[12];    //Cantidad de personal presente en cada hora
+        ArrayList<ArrayList<PersonClass>> present = new ArrayList<ArrayList<PersonClass>>();
         for (int i = 24; i < 32; i++)
             schedule[i] = "-";
-        for (PersonClass person : personnel)
-            person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
         if (personnel.size() == 0)
             for (int i = 24; i < 32; i++)
                 schedule[i] = "Sin personal.";
         else {
             for (PersonClass person : personnel)
                 person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
-            for (int i=0; i<present.length; i++) {
-                present[i] = 0;
+            for (int i=0; i<4; i++) {
+                present.add(new ArrayList<PersonClass>());
                 for (PersonClass person : personnel)
-                    if (person.getScheduleStart() <= (10 + i) * 100 && person.getScheduleEnd() >= (11 + i) * 100)
-                        present[i]++;
+                    if (person.getScheduleStart() <= (17 + i) * 100 && person.getScheduleEnd() >= (18 + i) * 100)   //Si la persona está disponible en esa hora
+                        if (!person.getName().equals(schedule[(i*2)+14]) && !person.getName().equals(schedule[(i*2)+15]))   //Si no topa con elevador principal
+                            present.get(i).add(person);
             }
-            for (int i = 31; i > 23; i--) {  //Llenar elevador de apoyo desde 21:00 hasta 17:00
-                if (personnel.size() < 3)
-                    schedule[i] = "Sin personal.";
-                else if (present[7+((i-24)/2)] > 2) {
-                    while (true) {
-                        chosen = random.nextInt(personnel.size());
-                        //Log.d("info", "i = "+i+", chosen: "+personnel.get(chosen).getName());
-                        if (personnel.get(chosen).getScheduleStart() <= (17 + ((i-24)/2)) * 100 && personnel.get(chosen).getScheduleEnd() >= (18 + ((i-24)/2)) * 100)
-                            if (present[7+((i-24)/2)] == 3) {
-                                if (!schedule[i-(i%2)-10].equals(personnel.get(chosen).getName()) && !schedule[(i-(i%2))-9].equals(personnel.get(chosen).getName())) {
-                                    schedule[i] = personnel.get(chosen).getName();
-                                    if ((i == 24 || i == 25) && personnel.get(chosen).getName().equals(schedule[38])) {
-                                        for (int j = 32; j < schedule.length; j++)
-                                            schedule[j] = "-";
-                                        for (PersonClass person : personnel)
-                                            person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
-                                    }
-                                    else personnel.get(chosen).addLoad();
-                                    break;
-                                }
-                            } else if (!schedule[i-(i%2)].equals(personnel.get(chosen).getName()) && !schedule[(i-(i%2))+1].equals(personnel.get(chosen).getName())
-                            && !schedule[i-(i%2)-10].equals(personnel.get(chosen).getName()) && !schedule[(i-(i%2))-9].equals(personnel.get(chosen).getName())) {
-                                schedule[i] = personnel.get(chosen).getName();
-                                if ((i == 24 || i == 25) && personnel.get(chosen).getName().equals(schedule[38])) {
-                                    for (int j = 32; j < schedule.length; j++)
-                                        schedule[j] = "-";
-                                    for (PersonClass person : personnel)
-                                        person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
-                                }
-                                else personnel.get(chosen).addLoad();
-                                break;
+            /*for (int i=0; i<present.size(); i++) {
+                Log.d("info", "Personas para las "+(i+17));
+                for (int j=0; j<present.get(i).size(); j++)
+                    Log.d("info", present.get(i).get(j).getName());
+            }*/
+            for (int i=0; i <= personnel.size(); i++)  //Repite la cantidad del personal
+                for (int j=present.size()-1; j >= 0; j--)   //Recorre todos los horarios
+                    if (present.get(j).size() == i) {
+                        if (i == 0) {
+                            schedule[(j*2) + 24] = "Sin personal.";
+                            schedule[(j*2) + 25] = "Sin personal.";
+                        } else if (i == 1) {
+                            schedule[(j*2) + 24] = present.get(j).get(0).assign();
+                            schedule[(j*2) + 25] = present.get(j).get(0).assign();
+                            if (j == 0 && present.get(j).get(0).getName().equals(schedule[38])) {
+                                for (int k = 32; k < schedule.length; k++)
+                                    schedule[k] = "-";
+                                for (PersonClass person : personnel)
+                                    person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
                             }
+                        } else if (i == 2) {
+                            schedule[(j*2) + 24] = present.get(j).get(0).assign();
+                            schedule[(j*2) + 25] = present.get(j).get(1).assign();
+                            if (j == 0 && (present.get(j).get(0).getName().equals(schedule[38]) || present.get(j).get(1).getName().equals(schedule[38]))) {
+                                for (int k = 32; k < schedule.length; k++)
+                                    schedule[k] = "-";
+                                for (PersonClass person : personnel)
+                                    person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
+                            }
+                        } else {
+                            Collections.shuffle(present.get(j));
+                            Collections.sort(present.get(j), new Comparator<PersonClass>() {
+                                @Override
+                                public int compare(PersonClass o1, PersonClass o2) {
+                                    return Integer.valueOf(o1.getLoad()).compareTo(o2.getLoad());
+                                }
+                            });
+                            schedule[(j*2) + 24] = present.get(j).get(0).assign();
+                            schedule[(j*2) + 25] = present.get(j).get(1).assign();
+                            if (j == 0 && (present.get(j).get(0).getName().equals(schedule[38]) || present.get(j).get(1).getName().equals(schedule[38]))) {
+                                for (int k = 32; k < schedule.length; k++)
+                                    schedule[k] = "-";
+                                for (PersonClass person : personnel)
+                                    person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
+                            }
+                        }
                     }
-                } else schedule[i] = "Sin personal.";
-            }
-            //Log.d("info", "Elevador de apoyo lleno desde 21:00 hasta 17:00");
         }
     }
 
-    public void fillTours(String[] schedule, ArrayList<PersonClass> personnel) {
-        //TODO: implementar sistema de present (si son 3 y no topa con elevador secundario) (si son 3 y topa con elevador secundario?)
-        Random random = new Random();
-        int chosen, tries;
+    public void genTours(String[] schedule, ArrayList<PersonClass> personnel){
+        ArrayList<ArrayList<PersonClass>> present = new ArrayList<ArrayList<PersonClass>>();
         for (int i = 32; i < schedule.length; i++)
             schedule[i] = "-";
-        for (PersonClass person : personnel)
-            person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
-        if (personnel.size() < 8) {
-            if (personnel.size() == 0)
-                for (int i = 32; i < schedule.length; i++)
-                    schedule[i] = "Sin personal.";
-            else for (PersonClass person : personnel) {
-                tries = 0;
-                do {
-                    chosen = random.nextInt(7);
-                    switch (chosen) {
-                        case 0:
-                        case 1:
-                        case 5:
-                            if (person.getScheduleStart() <= (11 + chosen) * 100 && person.getScheduleEnd() >= (12 + chosen) * 100)
-                                if (!person.getName().equals(schedule[(chosen*2)+2]) && !person.getName().equals(schedule[(chosen*2)+3])) {
-                                    schedule[32+chosen] = person.getName();
-                                    person.addLoad();
-                                }
-                            tries++;
-                            break;
-                        case 2: //Hora de almuerzo
-                        case 3:
-                        case 4:
-                            if (person.getScheduleStart() <= (11 + chosen) * 100 && person.getScheduleEnd() >= (12 + chosen) * 100)
-                                if (!person.getName().equals(schedule[(chosen*2)+2]) && !person.getName().equals(schedule[(chosen*2)+3])) {
-                                    if (person.getScheduleStart()%100 > 0) {
-                                        if (person.getScheduleStart()/100 != chosen+7) {
-                                            schedule[32+chosen] = person.getName();
-                                            person.addLoad();
-                                        }
-                                    } else if (person.getScheduleStart()/100 != chosen+8) {
-                                        schedule[32+chosen] = person.getName();
-                                        person.addLoad();
-                                    }
-                                }
-                            tries++;
-                            break;
-                        case 6: //Topa con elevador primario y secundario
-                            if (person.getScheduleStart() <= (11 + chosen) * 100 && person.getScheduleEnd() >= (12 + chosen) * 100)
-                                if (!person.getName().equals(schedule[(chosen*2)+2]) && !person.getName().equals(schedule[(chosen*2)+3]) && !person.getName().equals(schedule[(chosen*2)+12]) && !person.getName().equals(schedule[(chosen*2)+13])) {
-                                    schedule[32+chosen] = person.getName();
-                                    person.addLoad();
-                                }
-                            tries++;
-                            break;
-                    }
-                } while (schedule[32 + chosen].equals("-") && tries < 7);
-            }
-        }
+        if (personnel.size() == 0)
+            for (int i = 32; i < schedule.length; i++)
+                schedule[i] = "Sin personal.";
         else {
-            boolean[] picked = new boolean[personnel.size()];
-            for (int i = 0; i < personnel.size(); i++) picked[i] = false;
-            int loadmax = personnel.get(0).getLoad();
-            for (int i=0; i<personnel.size(); i++)
-                if (personnel.get(i).getLoad() > loadmax)
-                    loadmax = personnel.get(i).getLoad();
-            int ammount = 0;
-            for (int i=0; i<personnel.size(); i++)
-                if (personnel.get(i).getLoad() < loadmax)
-                    ammount++;
-            for (int i = 0; i < 7; i++) {
-                tries = 0;
-                do {
-                    chosen = random.nextInt(personnel.size());
-                    switch (i) {
-                        case 0:
-                        case 1:
-                        case 5:
-                            if (personnel.get(chosen).getScheduleStart() <= (11 + i) * 100 && personnel.get(chosen).getScheduleEnd() >= (12 + i) * 100)
-                                if (!personnel.get(chosen).getName().equals(schedule[(i * 2) + 2]) && !personnel.get(chosen).getName().equals(schedule[(i * 2) + 3]))
-                                    if (!picked[chosen])
-                                        if (ammount > 0) {
-                                            if (personnel.get(chosen).getLoad() < loadmax) {
-                                                schedule[32 + i] = personnel.get(chosen).getName();
-                                                personnel.get(chosen).addLoad();
-                                                picked[chosen] = true;
-                                                ammount--;
-                                            }
-                                        } else {
-                                            schedule[32 + i] = personnel.get(chosen).getName();
-                                            personnel.get(chosen).addLoad();
-                                            picked[chosen] = true;
-                                        }
-                            tries++;
-                            break;
-                        case 2: //Hora de almuerzo
-                        case 3:
-                        case 4:
-                            if (personnel.get(chosen).getScheduleStart() <= (11 + i) * 100 && personnel.get(chosen).getScheduleEnd() >= (12 + i) * 100)
-                                if (!personnel.get(chosen).getName().equals(schedule[(i * 2) + 2]) && !personnel.get(chosen).getName().equals(schedule[(i * 2) + 3])) {
-                                    if (personnel.get(chosen).getScheduleStart() % 100 > 0) {
-                                        if (personnel.get(chosen).getScheduleStart() / 100 != i + 7) {
-                                            if (!picked[chosen])
-                                                if (ammount > 0) {
-                                                    if (personnel.get(chosen).getLoad() < loadmax) {
-                                                        schedule[32 + i] = personnel.get(chosen).getName();
-                                                        personnel.get(chosen).addLoad();
-                                                        picked[chosen] = true;
-                                                        ammount--;
-                                                    }
-                                                } else {
-                                                    schedule[32 + i] = personnel.get(chosen).getName();
-                                                    personnel.get(chosen).addLoad();
-                                                    picked[chosen] = true;
-                                                }
-                                        }
-                                    } else if (personnel.get(chosen).getScheduleStart() / 100 != i + 8) {
-                                        if (!picked[chosen])
-                                            if (ammount > 0) {
-                                                if (personnel.get(chosen).getLoad() < loadmax) {
-                                                    schedule[32 + i] = personnel.get(chosen).getName();
-                                                    personnel.get(chosen).addLoad();
-                                                    picked[chosen] = true;
-                                                    ammount--;
-                                                }
-                                            } else {
-                                                schedule[32 + i] = personnel.get(chosen).getName();
-                                                personnel.get(chosen).addLoad();
-                                                picked[chosen] = true;
-                                            }
-                                    }
-                                }
-                            tries++;
-                            break;
-                        case 6: //Topa con elevador primario y secundario
-                            if (personnel.get(chosen).getScheduleStart() <= (11 + i) * 100 && personnel.get(chosen).getScheduleEnd() >= (12 + i) * 100)
-                                if (!personnel.get(chosen).getName().equals(schedule[(i * 2) + 2]) && !personnel.get(chosen).getName().equals(schedule[(i * 2) + 3]) && !personnel.get(chosen).getName().equals(schedule[(i * 2) + 12]) && !personnel.get(chosen).getName().equals(schedule[(i * 2) + 13])) {
-                                    if (!picked[chosen])
-                                        if (ammount > 0) {
-                                            if (personnel.get(chosen).getLoad() < loadmax) {
-                                                schedule[32 + i] = personnel.get(chosen).getName();
-                                                personnel.get(chosen).addLoad();
-                                                picked[chosen] = true;
-                                                ammount--;
-                                            }
-                                        } else {
-                                            schedule[32 + i] = personnel.get(chosen).getName();
-                                            personnel.get(chosen).addLoad();
-                                            picked[chosen] = true;
-                                        }
-                                }
-                            tries++;
-                            break;
-                    }
-                } while (schedule[32 + i].equals("-") && tries < 7);
+            for (PersonClass person : personnel)
+                person.setLoad(Collections.frequency(Arrays.asList(schedule), person.getName()));
+            for (int i=0; i<7; i++) {
+                present.add(new ArrayList<PersonClass>());
+                for (PersonClass person : personnel)
+                    if (person.getScheduleStart() <= (11 + i) * 100 && person.getScheduleEnd() >= (12 + i) * 100)   //Si la persona está disponible en esa hora
+                        if (!person.getName().equals(schedule[(i*2)+2]) && !person.getName().equals(schedule[(i*2)+3])) //Si no topa con elevador principal
+                            if (i == 6) {
+                                if (!person.getName().equals(schedule[24]) && !person.getName().equals(schedule[25]))   //Si no topa con elevador secundario
+                                    present.get(i).add(person);
+                            } else present.get(i).add(person);
             }
-            /*for (int i = 32; i < schedule.length; i++)
-                if (schedule[i].equals("-")) {
-                    fillTours(schedule, personnel);
-                    break;
-                }*/
+            /*for (int i=0; i<present.size(); i++) {
+                Log.d("info", "Personas para las "+(i+11));
+                for (int j=0; j<present.get(i).size(); j++)
+                    Log.d("info", present.get(i).get(j).getName());
+            }*/
+            for (int i=0; i <= personnel.size(); i++)  //Repite la cantidad del personal
+                for (int j=present.size()-1; j >= 0; j--)   //Recorre todos los horarios
+                    if (present.get(j).size() == 1) {
+                        schedule[j+32] = present.get(j).get(0).assign();
+                        for (int k=0; k<present.size(); k++)
+                            for (int l = 0; l <present.get(k).size(); l++)
+                                if (present.get(k).get(l).getName().equals(schedule[j+32])) {
+                                    present.get(k).remove(l);
+                                    break;
+                                }
+                    } else if (present.get(j).size() > 1) {
+                        Collections.shuffle(present.get(j));
+                        Collections.sort(present.get(j), new Comparator<PersonClass>() {
+                            @Override
+                            public int compare(PersonClass o1, PersonClass o2) {
+                                return Integer.valueOf(o1.getLoad()).compareTo(o2.getLoad());
+                            }
+                        });
+                        schedule[j+32] = present.get(j).get(0).assign();
+                        for (int k=0; k<present.size(); k++)
+                            for (int l = 0; l <present.get(k).size(); l++)
+                                if (present.get(k).get(l).getName().equals(schedule[j+32])) {
+                                    present.get(k).remove(l);
+                                    break;
+                                }
+                    }
         }
-        //Log.d("info", "Tours lleno desde 11:00 hasta 17:00");
     }
 }
