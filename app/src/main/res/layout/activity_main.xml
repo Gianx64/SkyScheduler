@@ -335,7 +335,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/hour17" />
+                        android:text="@string/hour16" />
                     <TextView
                         android:id="@+id/textView12"
                         android:layout_width="match_parent"
@@ -348,7 +348,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/hour18" />
+                        android:text="@string/hour17" />
                     <TextView
                         android:id="@+id/textView13"
                         android:layout_width="match_parent"
@@ -361,7 +361,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/hour19" />
+                        android:text="@string/hour18" />
                     <TextView
                         android:id="@+id/textView14"
                         android:layout_width="match_parent"
@@ -374,7 +374,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/hour20" />
+                        android:text="@string/hour19" />
                     <TextView
                         android:id="@+id/textView15"
                         android:layout_width="match_parent"
