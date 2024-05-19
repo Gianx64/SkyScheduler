@@ -87,6 +87,7 @@ public class MainActivity extends AppCompatActivity {
                         scheduleStart.setText("930");
                         scheduleEnd.setEnabled(false);
                         scheduleEnd.setText("1930");
+                        lunch.setText("1300");
                     }
                 });
                 in.setOnClickListener(new View.OnClickListener() {
@@ -96,6 +97,7 @@ public class MainActivity extends AppCompatActivity {
                         scheduleStart.setText("1100");
                         scheduleEnd.setEnabled(false);
                         scheduleEnd.setText("2100");
+                        lunch.setText("1400");
                     }
                 });
                 pm.setOnClickListener(new View.OnClickListener() {
@@ -105,6 +107,7 @@ public class MainActivity extends AppCompatActivity {
                         scheduleStart.setText("1200");
                         scheduleEnd.setEnabled(false);
                         scheduleEnd.setText("2200");
+                        lunch.setText("1500");
                     }
                 });
                 other.setOnClickListener(new View.OnClickListener() {
@@ -114,6 +117,7 @@ public class MainActivity extends AppCompatActivity {
                         scheduleStart.setText("");
                         scheduleEnd.setEnabled(true);
                         scheduleEnd.setText("");
+                        lunch.setText("");
                     }
                 });
                 save.setOnClickListener(new View.OnClickListener() {
