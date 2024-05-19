@@ -74,12 +74,57 @@ public class MainActivity extends AppCompatActivity {
                 final EditText scheduleStart = dialog.findViewById(R.id.horarioInicio);
                 final EditText scheduleEnd = dialog.findViewById(R.id.horarioFin);
                 final EditText lunch = dialog.findViewById(R.id.lunch);
+                final Button am = dialog.findViewById(R.id.radioAM);
+                final Button in = dialog.findViewById(R.id.radioI);
+                final Button pm = dialog.findViewById(R.id.radioPM);
+                final Button other = dialog.findViewById(R.id.radioO);
                 Button save = dialog.findViewById(R.id.save);
                 Button cancel = dialog.findViewById(R.id.cancel);
+                am.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        scheduleStart.setEnabled(false);
+                        scheduleStart.setText("930");
+                        scheduleEnd.setEnabled(false);
+                        scheduleEnd.setText("1930");
+                    }
+                });
+                in.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        scheduleStart.setEnabled(false);
+                        scheduleStart.setText("1100");
+                        scheduleEnd.setEnabled(false);
+                        scheduleEnd.setText("2100");
+                    }
+                });
+                pm.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        scheduleStart.setEnabled(false);
+                        scheduleStart.setText("1200");
+                        scheduleEnd.setEnabled(false);
+                        scheduleEnd.setText("2200");
+                    }
+                });
+                other.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        scheduleStart.setEnabled(true);
+                        scheduleStart.setText("");
+                        scheduleEnd.setEnabled(true);
+                        scheduleEnd.setText("");
+                    }
+                });
                 save.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         try {
+                            if (lunch.getText().toString().equals(""))
+                                if (Integer.parseInt(scheduleStart.getText().toString()) % 100 > 0) {
+                                    lunch.setText(String.valueOf(Integer.parseInt(scheduleStart.getText().toString()) - (Integer.parseInt(scheduleStart.getText().toString()) % 100) + 400));
+                                } else
+                                    lunch.setText(String.valueOf(Integer.parseInt(scheduleStart.getText().toString()) + 300));
                             PersonClass person = new PersonClass(name.getText().toString(), Integer.parseInt(scheduleStart.getText().toString()), Integer.parseInt(scheduleEnd.getText().toString()), Integer.parseInt(lunch.getText().toString()));
                             if (!name.getText().toString().equals("")
                                     && !name.getText().toString().equals("-")

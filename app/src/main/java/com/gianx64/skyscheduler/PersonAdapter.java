@@ -5,12 +5,14 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.support.annotation.NonNull;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -76,16 +78,74 @@ public class PersonAdapter extends BaseAdapter {
                 final EditText scheduleStart = (EditText) dialog.findViewById(R.id.horarioInicio);
                 final EditText scheduleEnd = (EditText) dialog.findViewById(R.id.horarioFin);
                 final EditText lunch = dialog.findViewById(R.id.lunch);
+                final RadioGroup shifts = dialog.findViewById(R.id.shifts);
+                final Button am = dialog.findViewById(R.id.radioAM);
+                final Button in = dialog.findViewById(R.id.radioI);
+                final Button pm = dialog.findViewById(R.id.radioPM);
+                final Button other = dialog.findViewById(R.id.radioO);
                 Button save = (Button) dialog.findViewById(R.id.save);
                 Button cancel = (Button) dialog.findViewById(R.id.cancel);
                 name.setText(personnel.get(position).getName());
                 scheduleStart.setText(""+personnel.get(position).getScheduleStart());
                 scheduleEnd.setText(""+personnel.get(position).getScheduleEnd());
                 lunch.setText(""+personnel.get(position).getLunch());
+                am.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        scheduleStart.setEnabled(false);
+                        scheduleStart.setText("930");
+                        scheduleEnd.setEnabled(false);
+                        scheduleEnd.setText("1930");
+                    }
+                });
+                in.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        scheduleStart.setEnabled(false);
+                        scheduleStart.setText("1100");
+                        scheduleEnd.setEnabled(false);
+                        scheduleEnd.setText("2100");
+                    }
+                });
+                pm.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        scheduleStart.setEnabled(false);
+                        scheduleStart.setText("1200");
+                        scheduleEnd.setEnabled(false);
+                        scheduleEnd.setText("2200");
+                    }
+                });
+                other.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        scheduleStart.setEnabled(true);
+                        scheduleStart.setText("");
+                        scheduleEnd.setEnabled(true);
+                        scheduleEnd.setText("");
+                    }
+                });
+                if (personnel.get(position).getScheduleStart() == 930 && personnel.get(position).getScheduleEnd() == 1930) {
+                    shifts.check(R.id.radioAM);
+                    am.callOnClick();
+                }
+                else if (personnel.get(position).getScheduleStart() == 1100 && personnel.get(position).getScheduleEnd() == 2100) {
+                    shifts.check(R.id.radioI);
+                    in.callOnClick();
+                }
+                else if (personnel.get(position).getScheduleStart() == 1200 && personnel.get(position).getScheduleEnd() == 2200) {
+                    shifts.check(R.id.radioPM);
+                    pm.callOnClick();
+                }
                 save.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        try{
+                        try {
+                            if (lunch.getText().toString().equals(""))
+                                if (Integer.parseInt(scheduleStart.getText().toString()) % 100 > 0) {
+                                    lunch.setText(String.valueOf(Integer.parseInt(scheduleStart.getText().toString()) - (Integer.parseInt(scheduleStart.getText().toString()) % 100) + 400));
+                                } else
+                                    lunch.setText(String.valueOf(Integer.parseInt(scheduleStart.getText().toString()) + 300));
                             PersonClass editedPerson = new PersonClass(personnel.get(position).getId(), name.getText().toString(), Integer.parseInt(scheduleStart.getText().toString()), Integer.parseInt(scheduleEnd.getText().toString()), Integer.parseInt(lunch.getText().toString()));
                             if (!name.getText().toString().equals("")
                                     && !name.getText().toString().equals("-")
@@ -99,7 +159,6 @@ public class PersonAdapter extends BaseAdapter {
                                 db.update(editedPerson);
                                 Toast.makeText(context, "Cambios guardados exitosamente.", Toast.LENGTH_SHORT).show();
                                 MainActivity.wipeSchedule();
-                                MainActivity.sortPersonnel();
                             }
                             else {
                                 StringBuilder errors = new StringBuilder();
@@ -142,6 +201,7 @@ public class PersonAdapter extends BaseAdapter {
                             Toast.makeText(context, errors, Toast.LENGTH_SHORT).show();
                         }
                         personnel = db.readAll();
+                        MainActivity.sortPersonnel();
                         notifyDataSetChanged();
                         dialog.dismiss();
                     }

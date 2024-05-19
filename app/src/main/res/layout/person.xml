@@ -13,6 +13,37 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="@string/name" />
+    <RadioGroup
+        android:id="@+id/shifts"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+        <RadioButton
+            android:id="@+id/radioAM"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/scheduleAM" />
+        <RadioButton
+            android:id="@+id/radioI"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/scheduleI" />
+        <RadioButton
+            android:id="@+id/radioPM"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/schedulePM" />
+        <RadioButton
+            android:id="@+id/radioO"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:checked="true"
+            android:text="@string/scheduleO" />
+    </RadioGroup>
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

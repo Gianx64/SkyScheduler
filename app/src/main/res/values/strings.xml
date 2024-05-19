@@ -8,6 +8,10 @@
     <string name="gen_tours">Generar Tours</string>
     <string name="name">Nombre:</string>
     <string name="schedule">Horario:</string>
+    <string name="scheduleAM">AM</string>
+    <string name="schedulePM">PM</string>
+    <string name="scheduleI">I</string>
+    <string name="scheduleO">Otro</string>
     <string name="scheduleStart">Inicio horario:</string>
     <string name="scheduleEnd">Fin horario:</string>
     <string name="lunch">Almuerzo:</string>
