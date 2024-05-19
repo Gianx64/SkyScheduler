@@ -656,8 +656,8 @@ public class MainActivity extends AppCompatActivity {
                     if (person.getScheduleStart() <= (11 + i) * 100 && person.getScheduleEnd() >= (12 + i) * 100)   //Si la persona está disponible en esa hora
                         if (!person.getName().equals(schedule[(i*2)+2]) && !person.getName().equals(schedule[(i*2)+3])) //Si no topa con elevador principal
                             if (person.getLunch() / 100 != i + 11)  //Si no es hora de almuerzo de esa persona
-                                if (i == 6) {
-                                    if (!person.getName().equals(schedule[24]) && !person.getName().equals(schedule[25]))   //Si no topa con elevador secundario
+                                if (i > 4) {
+                                    if (!person.getName().equals(schedule[(i * 2) + 14]) && !person.getName().equals(schedule[(i * 2) + 15]))   //Si no topa con elevador secundario
                                         present.get(i).add(person);
                                 } else present.get(i).add(person);
             }
